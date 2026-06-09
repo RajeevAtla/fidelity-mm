@@ -65,6 +65,8 @@ const DATA_URL = "https://moneymarket.fun/data/fundYields.json";
 
 const CL: Record<Category, string> = { p:"Prime", g:"Government", t:"Treasury", nm:"Natl Muni", nj:"NJ Muni", ny:"NY Muni", ca:"CA Muni", ma:"MA Muni" };
 const CC: Record<Category, string> = { p:"#ef9a9a", g:"#ce93d8", t:"#fff59d", nm:"#a5d6a7", nj:"#90caf9", ny:"#80cbc4", ca:"#ffcc80", ma:"#bcaaa4" };
+const LCD: Record<Category, string> = { p:"#5b1616", g:"#401050", t:"#3f3400", nm:"#153d1d", nj:"#0b3553", ny:"#063b38", ca:"#4f2700", ma:"#3f2c25" };
+const LCL: Record<Category, string> = { p:"#7f1d1d", g:"#6b217d", t:"#5f4b00", nm:"#1f5c2d", nj:"#0f4c75", ny:"#0f5b55", ca:"#7a3f00", ma:"#5d4037" };
 const muniCats: Category[] = ["nm","nj","ny","ca","ma"];
 const isMuni = (c: Category) => muniCats.includes(c);
 
@@ -384,12 +386,22 @@ export default function App() {
         </table>
       </div>
 
-      <div style={{ marginTop:10, fontSize:9, color:ui.muted, lineHeight:1.5 }}>
+      <div style={{ marginTop:10, fontSize:10, color:ui.muted, lineHeight:1.7 }}>
         <strong>Legend:</strong>{" "}
         {(Object.entries(CL) as [Category, string][]).map(([k,v])=>(
-          <span key={k} style={{ background:CC[k], padding:"1px 5px", borderRadius:3, marginRight:3 }}>{v}</span>
+          <span key={k} style={{
+            display:"inline-block",
+            background:dark ? LCD[k] : CC[k],
+            color:dark ? "#f8fafc" : LCL[k],
+            border:`1px solid ${dark ? CC[k] : LCL[k]}`,
+            padding:"2px 6px",
+            borderRadius:999,
+            marginRight:4,
+            marginBottom:4,
+            fontWeight:700,
+          }}>{v}</span>
         ))}
-        <br/>Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER. Not financial advice.
+        <br/><span style={{ color:dark ? "#cbd5e1" : "#555" }}>Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER. Not financial advice.</span>
       </div>
     </div>
   );
