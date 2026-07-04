@@ -5,12 +5,16 @@
     "@farmfe/cli": "^1.0.5",
     "@farmfe/core": "^1.7.11",
     "@farmfe/plugin-react": "^1.2.6",
+    "@tailwindcss/cli": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.2",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3"
   },
   "private": true,
   "scripts": {
-    "dev": "bunx --bun farm start",
-    "build": "bunx --bun farm build",
+    "dev": "bun --bun scripts/dev.mjs",
+    "build": "bunx --bun tailwindcss -i ./styles.css -o ./tailwind.generated.css && bunx --bun farm build",
     "preview": "bunx --bun farm preview",
     "scrape:fidelity": "bun scripts/scrape-fidelity-mm.ts"
   },

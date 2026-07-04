@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import allClassRates from "./data/fidelity-mm-allclass.json";
 import {
   applyThemeToDocument,
-  THEMES,
   THEME_STORAGE_KEY,
   type Category,
   type ResolvedTheme,
   type ThemeMode,
+  getStoredThemeMode,
   resolveThemeMode,
 } from "./theme";
 
@@ -133,6 +133,7 @@ const CL: Record<Category, string> = {
   ca: "CA Muni",
   ma: "MA Muni",
 };
+
 const isMuni = (c: Category) => ["nm", "nj", "ny", "ca", "ma"].includes(c);
 
 function displayName(fund: RateSheetFund) {
@@ -163,36 +164,74 @@ function at(f: Fund, fr: number, nr: number) {
 
 const allCats: CategoryFilter[] = ["all", "p", "g", "t", "nm", "nj", "ny", "ca", "ma"];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
+const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
 
-function readStoredThemeMode(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "system";
-  }
+const buttonBase =
+  "inline-flex items-center rounded-md border px-2 py-[5px] text-[10px] font-medium leading-none transition-colors";
+const neutralButtonClasses =
+  "border-btn-border bg-btn-bg text-btn-text data-[active=true]:border-border-strong data-[active=true]:bg-btn-active-bg data-[active=true]:text-btn-active-text";
+const categoryButtonVariants: Record<Category, string> = {
+  p: "data-[active=true]:border-cat-p-border data-[active=true]:bg-cat-p-fill data-[active=true]:text-cat-p-text",
+  g: "data-[active=true]:border-cat-g-border data-[active=true]:bg-cat-g-fill data-[active=true]:text-cat-g-text",
+  t: "data-[active=true]:border-cat-t-border data-[active=true]:bg-cat-t-fill data-[active=true]:text-cat-t-text",
+  nm: "data-[active=true]:border-cat-nm-border data-[active=true]:bg-cat-nm-fill data-[active=true]:text-cat-nm-text",
+  nj: "data-[active=true]:border-cat-nj-border data-[active=true]:bg-cat-nj-fill data-[active=true]:text-cat-nj-text",
+  ny: "data-[active=true]:border-cat-ny-border data-[active=true]:bg-cat-ny-fill data-[active=true]:text-cat-ny-text",
+  ca: "data-[active=true]:border-cat-ca-border data-[active=true]:bg-cat-ca-fill data-[active=true]:text-cat-ca-text",
+  ma: "data-[active=true]:border-cat-ma-border data-[active=true]:bg-cat-ma-fill data-[active=true]:text-cat-ma-text",
+};
+const categoryFillClasses: Record<Category, string> = {
+  p: "fill-cat-p-fill",
+  g: "fill-cat-g-fill",
+  t: "fill-cat-t-fill",
+  nm: "fill-cat-nm-fill",
+  nj: "fill-cat-nj-fill",
+  ny: "fill-cat-ny-fill",
+  ca: "fill-cat-ca-fill",
+  ma: "fill-cat-ma-fill",
+};
+const categoryCellClasses: Record<Category, string> = {
+  p: "bg-cat-p-soft text-cat-p-text",
+  g: "bg-cat-g-soft text-cat-g-text",
+  t: "bg-cat-t-soft text-cat-t-text",
+  nm: "bg-cat-nm-soft text-cat-nm-text",
+  nj: "bg-cat-nj-soft text-cat-nj-text",
+  ny: "bg-cat-ny-soft text-cat-ny-text",
+  ca: "bg-cat-ca-soft text-cat-ca-text",
+  ma: "bg-cat-ma-soft text-cat-ma-text",
+};
+const categoryCellTextClasses: Record<Category, string> = {
+  p: "text-cat-p-text",
+  g: "text-cat-g-text",
+  t: "text-cat-t-text",
+  nm: "text-cat-nm-text",
+  nj: "text-cat-nj-text",
+  ny: "text-cat-ny-text",
+  ca: "text-cat-ca-text",
+  ma: "text-cat-ma-text",
+};
+const categoryLegendClasses: Record<Category, string> = {
+  p: "bg-cat-p-soft text-cat-p-text border-cat-p-border",
+  g: "bg-cat-g-soft text-cat-g-text border-cat-g-border",
+  t: "bg-cat-t-soft text-cat-t-text border-cat-t-border",
+  nm: "bg-cat-nm-soft text-cat-nm-text border-cat-nm-border",
+  nj: "bg-cat-nj-soft text-cat-nj-text border-cat-nj-border",
+  ny: "bg-cat-ny-soft text-cat-ny-text border-cat-ny-border",
+  ca: "bg-cat-ca-soft text-cat-ca-text border-cat-ca-border",
+  ma: "bg-cat-ma-soft text-cat-ma-text border-cat-ma-border",
+};
 
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    return "system";
-  }
-
-  return "system";
+function barPercent(value: number) {
+  return Math.max(0, Math.min(100, Math.round((value / 3.7) * 1000) / 10));
 }
 
-function buttonStyle(theme: (typeof THEMES)["light"], active: boolean) {
-  return {
-    padding: "5px 10px",
-    borderRadius: 6,
-    border: `1px solid ${active ? theme.borderStrong : theme.neutralButtonBorder}`,
-    background: active ? theme.neutralButtonActiveBg : theme.neutralButtonBg,
-    color: active ? theme.neutralButtonActiveText : theme.neutralButtonText,
-    fontSize: 10,
-    fontWeight: active ? 700 : 500,
-    cursor: "pointer",
-    lineHeight: 1,
-  } as const;
+function buttonClasses(active: boolean, tone?: string) {
+  return cx(
+    buttonBase,
+    neutralButtonClasses,
+    tone,
+    active && "font-semibold",
+  );
 }
 
 export default function App(props: { initialThemeMode: ThemeMode }) {
@@ -204,7 +243,6 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const [showAll, setShowAll] = useState(false);
 
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
-  const theme = THEMES[resolvedTheme];
   const rateDate = rateSheet.requestedPriceDate ?? "latest scrape";
   const fr = fedB[fi].r;
   const nr = njB[ni].r;
@@ -261,92 +299,34 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     }));
   }, []);
 
-  const shellStyle = {
-    minHeight: "100vh",
-    background: theme.pageBg,
-    color: theme.text,
-    fontFamily: theme.fontBody,
-    fontVariantNumeric: "tabular-nums",
-  } as const;
-
-  const containerStyle = {
-    maxWidth: 920,
-    margin: "0 auto",
-    padding: 14,
-  } as const;
-
-  const sectionLabelStyle = {
-    fontSize: 12,
-    fontWeight: 600,
-    color: theme.text,
-    fontFamily: theme.fontBody,
-  } as const;
-
-  const sliderMetaStyle = {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: 9,
-    color: theme.subtle,
-  } as const;
-
   const filterCount = (category: CategoryFilter) =>
     category === "all" ? "" : `(${F.filter((f) => f.c === category).length})`;
 
   return (
-    <div style={shellStyle}>
-      <div style={containerStyle}>
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-            alignItems: "flex-end",
-            marginBottom: 10,
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <h2
-              style={{
-                margin: "0 0 3px",
-                fontSize: 18,
-                lineHeight: 1.18,
-                fontFamily: theme.fontDisplay,
-                fontWeight: 700,
-                letterSpacing: 0,
-              }}
-            >
+    <div className="min-h-screen bg-page text-text font-body tabular-nums">
+      <div className="mx-auto max-w-[920px] px-[14px] py-[14px]">
+        <header className="mb-2.5 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="mb-[3px] font-display text-[18px] font-bold leading-[1.18] tracking-normal">
               All {F.length} Fidelity Money Market Funds — After-Tax Yield
             </h2>
-            <p style={{ color: theme.muted, fontSize: 11, margin: 0, lineHeight: 1.45 }}>
+            <p className="m-0 text-[11px] leading-[1.45] text-muted">
               7-day yields as of {rateDate}, from the scraped Fidelity all-class money market
               sheet. Single filer brackets (2025 tax year). For NJ residents.
             </p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 8px",
-              borderRadius: 8,
-              border: `1px solid ${theme.border}`,
-              background: theme.surface,
-              boxShadow: theme.cardShadow,
-            }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 700, color: theme.subtle, fontFamily: theme.fontBody }}>
-              Theme
-            </span>
-            <div style={{ display: "inline-flex", gap: 4 }}>
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm">
+            <span className="px-1 text-[11px] font-bold text-subtle">Theme</span>
+            <div className="inline-flex gap-1">
               {(["system", "light", "dark"] as ThemeMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   aria-pressed={themeMode === mode}
+                  data-active={themeMode === mode}
                   onClick={() => setThemeMode(mode)}
-                  style={buttonStyle(theme, themeMode === mode)}
+                  className={buttonClasses(themeMode === mode)}
                 >
                   {mode === "system" ? "System" : mode[0].toUpperCase() + mode.slice(1)}
                 </button>
@@ -355,18 +335,11 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         </header>
 
-        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={sectionLabelStyle}>Federal Bracket</span>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: theme.accentFederal,
-                  fontFamily: theme.fontBody,
-                }}
-              >
+        <div className="mb-3 flex flex-wrap gap-5">
+          <div className="min-w-[280px] flex-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-semibold text-text">Federal Bracket</span>
+              <span className="font-body text-[13px] font-bold text-federal">
                 {fedB[fi].l}
               </span>
             </div>
@@ -376,25 +349,19 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               max={6}
               value={fi}
               onInput={(e) => setFi(rangeValue(e))}
-              style={{ width: "100%", accentColor: theme.accentFederal }}
+              className="w-full accent-federal"
             />
-            <div style={sliderMetaStyle}>
+            <div className="flex justify-between text-[9px] text-subtle">
               {fedB.map((b) => (
                 <span key={b.r}>{b.r}%</span>
               ))}
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={sectionLabelStyle}>NJ State Bracket</span>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: theme.accentState,
-                  fontFamily: theme.fontBody,
-                }}
-              >
+
+          <div className="min-w-[280px] flex-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-semibold text-text">NJ State Bracket</span>
+              <span className="font-body text-[13px] font-bold text-state">
                 {njB[ni].l}
               </span>
             </div>
@@ -404,9 +371,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               max={6}
               value={ni}
               onInput={(e) => setNi(rangeValue(e))}
-              style={{ width: "100%", accentColor: theme.accentState }}
+              className="w-full accent-state"
             />
-            <div style={sliderMetaStyle}>
+            <div className="flex justify-between text-[9px] text-subtle">
               {njB.map((b) => (
                 <span key={b.r}>{b.r}%</span>
               ))}
@@ -414,37 +381,18 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+        <div className="mb-3 flex flex-wrap gap-1">
           {allCats.map((c) => {
             const active = fc === c;
-            const tone = c === "all" ? null : theme.category[c];
+            const tone = c === "all" ? "" : categoryButtonVariants[c];
             return (
               <button
                 key={c}
                 type="button"
                 aria-pressed={active}
+                data-active={active}
                 onClick={() => setFc(c)}
-                style={{
-                  ...buttonStyle(theme, active),
-                  background:
-                    active && c !== "all"
-                      ? tone?.fill
-                      : active
-                        ? theme.neutralButtonActiveBg
-                        : theme.neutralButtonBg,
-                  color:
-                    active && c !== "all"
-                      ? tone?.text
-                      : active
-                        ? theme.neutralButtonActiveText
-                        : theme.neutralButtonText,
-                  borderColor:
-                    active && c !== "all"
-                      ? tone?.border
-                      : active
-                        ? theme.borderStrong
-                        : theme.neutralButtonBorder,
-                }}
+                className={buttonClasses(active, tone)}
               >
                 {c === "all" ? "All" : CL[c]} {filterCount(c)}
               </button>
@@ -452,85 +400,60 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           })}
         </div>
 
-        {show.map((r, i) => {
-          const best = i === 0;
-          const w = Math.max(0, (r.a / 3.7) * 100);
-          const tone = theme.category[r.c];
-          return (
-            <div key={r.t} style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
-              <div style={{ width: 52, fontSize: 11, fontWeight: 600, flexShrink: 0, color: theme.text }}>
-                {r.t}
-              </div>
+        <div className="space-y-[3px]">
+          {show.map((r, i) => {
+            const best = i === 0;
+            const w = barPercent(r.a);
+            const toneFill = categoryFillClasses[r.c];
+            return (
               <div
-                style={{
-                  flex: 1,
-                  position: "relative",
-                  height: 20,
-                  background: theme.chartTrack,
-                  border: `1px solid ${theme.chartTrackBorder}`,
-                  borderRadius: 6,
-                  overflow: "hidden",
-                }}
+                key={r.t}
+                className="grid grid-cols-[52px_minmax(0,1fr)_62px_42px] items-center gap-x-1"
               >
-                <div
-                  style={{
-                    width: `${w}%`,
-                    height: "100%",
-                    borderRadius: 6,
-                    background: best ? theme.bestBarFill : tone.fill,
-                    transition: "width .25s ease",
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    right: 5,
-                    top: 2,
-                    fontSize: 11,
-                    fontWeight: best ? 700 : 500,
-                    color: best ? theme.successText : theme.text,
-                  }}
-                >
-                  {r.a.toFixed(3)}%
-                </span>
+                <div className="w-[52px] flex-shrink-0 text-[11px] font-semibold text-text">
+                  {r.t}
+                </div>
+                <div className="relative h-5 overflow-hidden rounded-md border border-track-border bg-track">
+                  <svg
+                    className="absolute inset-0 h-full w-full"
+                    viewBox="0 0 100 20"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      x="0"
+                      y="0"
+                      width={w}
+                      height="20"
+                      rx="6"
+                      className={best ? "fill-best-bar" : toneFill}
+                    />
+                  </svg>
+                  <span
+                    className={cx(
+                      "absolute right-[5px] top-[2px] text-[11px]",
+                      best ? "font-bold text-success-text" : "font-medium text-text",
+                    )}
+                  >
+                    {r.a.toFixed(3)}%
+                  </span>
+                </div>
+                <div className="w-[62px] flex-shrink-0 pl-1 text-right text-[9px] text-muted">
+                  {CL[r.c]}
+                </div>
+                <div className="w-[42px] flex-shrink-0 pl-1 text-right text-[9px] text-subtle">
+                  {r.mn}
+                </div>
               </div>
-              <div
-                style={{
-                  width: 62,
-                  fontSize: 9,
-                  color: theme.muted,
-                  textAlign: "right",
-                  flexShrink: 0,
-                  paddingLeft: 4,
-                }}
-              >
-                {CL[r.c]}
-              </div>
-              <div
-                style={{
-                  width: 42,
-                  fontSize: 9,
-                  color: theme.subtle,
-                  textAlign: "right",
-                  flexShrink: 0,
-                  paddingLeft: 4,
-                }}
-              >
-                {r.mn}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
 
         {!showAll && res.length > 15 && (
           <button
             type="button"
             onClick={() => setShowAll(true)}
-            style={{
-              ...buttonStyle(theme, false),
-              margin: "6px 0",
-              padding: "5px 12px",
-            }}
+            className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
           >
             Show all {res.length} funds ▾
           </button>
@@ -540,31 +463,17 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           <button
             type="button"
             onClick={() => setShowAll(false)}
-            style={{
-              ...buttonStyle(theme, false),
-              margin: "6px 0",
-              padding: "5px 12px",
-            }}
+            className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
           >
             Show top 15 ▴
           </button>
         )}
 
         {top && (
-          <div
-            style={{
-              padding: 12,
-              background: theme.successBg,
-              borderRadius: 6,
-              border: `1px solid ${theme.successBorder}`,
-              margin: "10px 0",
-              boxShadow: theme.cardShadow,
-              color: theme.successText,
-            }}
-          >
-            <strong style={{ fontSize: 14 }}>Best: {top.t}</strong> — {top.n} ({CL[top.c]})
+          <div className="my-2.5 rounded-md border border-success-border bg-success-bg p-3 text-success-text shadow-sm">
+            <strong className="text-[14px]">Best: {top.t}</strong> — {top.n} ({CL[top.c]})
             <br />
-            <span style={{ fontSize: 12 }}>
+            <span className="text-[12px]">
               After-tax yield: <strong>{top.a.toFixed(3)}%</strong> · Gross:{" "}
               {top.y.toFixed(2)}% · ER: {top.er}% · Min: {top.mn}
               <br />
@@ -574,44 +483,21 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         )}
 
-        <h3
-          style={{
-            margin: "16px 0 4px",
-            fontSize: 14,
-            fontFamily: theme.fontDisplay,
-            fontWeight: 700,
-            letterSpacing: 0,
-          }}
-        >
+        <h3 className="mb-1 mt-4 font-display text-[14px] font-bold leading-tight tracking-normal">
           Winner at Every Bracket Combination
         </h3>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ borderCollapse: "collapse", fontSize: 10, width: "100%" }}>
+
+        <div className="overflow-x-auto rounded-md border border-table-cell-border">
+          <table className="w-full border-collapse text-[10px]">
             <thead>
               <tr>
-                <th
-                  style={{
-                    padding: "5px 3px",
-                    borderBottom: `2px solid ${theme.tableHeaderBorder}`,
-                    textAlign: "left",
-                    fontSize: 9,
-                    color: theme.muted,
-                    background: theme.tableHeaderBg,
-                  }}
-                >
+                <th className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
                   Fed↓ \ NJ→
                 </th>
                 {njB.map((b) => (
                   <th
                     key={b.r}
-                    style={{
-                      padding: "5px 2px",
-                      borderBottom: `2px solid ${theme.tableHeaderBorder}`,
-                      textAlign: "center",
-                      fontSize: 9,
-                      color: theme.muted,
-                      background: theme.tableHeaderBg,
-                    }}
+                    className="border-b-2 border-table-header-border bg-table-header-bg px-[2px] py-[5px] text-center text-[9px] text-muted"
                   >
                     {b.r}%
                   </th>
@@ -621,36 +507,29 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             <tbody>
               {summary.map((row) => (
                 <tr key={row.fb.r}>
-                  <td
-                    style={{
-                      padding: "4px 3px",
-                      borderBottom: `1px solid ${theme.tableCellBorder}`,
-                      fontWeight: 600,
-                      fontSize: 10,
-                      color: theme.text,
-                    }}
-                  >
+                  <td className="border-b border-table-cell-border px-[3px] py-1 text-[10px] font-semibold text-text">
                     {row.fb.r}%
                   </td>
                   {row.cols.map((w, ci) => {
                     const act = row.fb.r === fr && njB[ci].r === nr;
-                    const tone = theme.category[w.c];
+                    const tone = categoryCellClasses[w.c];
                     return (
                       <td
                         key={ci}
-                        style={{
-                          padding: "4px 2px",
-                          textAlign: "center",
-                          background: act ? theme.selectionBg : tone.soft,
-                          border: act
-                            ? `2px solid ${theme.selectionBorder}`
-                            : `1px solid ${theme.tableCellBorder}`,
-                        }}
+                        data-active={act}
+                        className={cx(
+                          "border px-[2px] py-1 text-center",
+                          act
+                            ? "border-selection-border bg-selection-bg"
+                            : cx("border-table-cell-border", tone),
+                        )}
                       >
-                        <div style={{ fontWeight: 700, fontSize: 10, color: act ? theme.selectionText : tone.text }}>
+                        <div
+                          className={cx("text-[10px] font-bold", act ? "text-selection-text" : categoryCellTextClasses[w.c])}
+                        >
                           {w.t}
                         </div>
-                        <div style={{ fontSize: 9, color: act ? theme.selectionText : theme.muted }}>
+                        <div className={cx("text-[9px]", act ? "text-selection-text" : "text-muted")}>
                           {w.a.toFixed(2)}%
                         </div>
                       </td>
@@ -662,20 +541,15 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </table>
         </div>
 
-        <div style={{ marginTop: 10, fontSize: 9, color: theme.subtle, lineHeight: 1.5 }}>
-          <strong style={{ color: theme.text }}>Legend:</strong>{" "}
+        <div className="mt-2.5 text-[9px] leading-[1.5] text-subtle">
+          <strong className="text-text">Legend:</strong>{" "}
           {(Object.entries(CL) as [Category, string][]).map(([k, v]) => (
             <span
               key={k}
-              style={{
-                background: theme.category[k].soft,
-                color: theme.category[k].text,
-                border: `1px solid ${theme.category[k].border}`,
-                padding: "1px 5px",
-                borderRadius: 3,
-                marginRight: 3,
-                display: "inline-block",
-              }}
+              className={cx(
+                "mr-[3px] inline-block rounded-[3px] border px-[5px] py-px",
+                categoryLegendClasses[k],
+              )}
             >
               {v}
             </span>

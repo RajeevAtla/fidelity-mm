@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@source "./index.tsx";
+@source "./main.tsx";
+@source "./theme.ts";
+
+@theme {
+  --font-body: "Soft Grotesk", "Soft Grotesk L", system-ui, sans-serif;
+  --font-display: "Tripsis", "Tripsis L", Georgia, serif;
+
+  --color-page: var(--page-bg);
+  --color-page-alt: var(--page-bg-alt);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-federal: var(--accent-federal);
+  --color-state: var(--accent-state);
+  --color-track: var(--chart-track);
+  --color-track-border: var(--chart-track-border);
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+  --color-selection-bg: var(--selection-bg);
+  --color-selection-border: var(--selection-border);
+  --color-selection-text: var(--selection-text);
+  --color-btn-bg: var(--neutral-button-bg);
+  --color-btn-text: var(--neutral-button-text);
+  --color-btn-border: var(--neutral-button-border);
+  --color-btn-active-bg: var(--neutral-button-active-bg);
+  --color-btn-active-text: var(--neutral-button-active-text);
+  --color-table-header-bg: var(--table-header-bg);
+  --color-table-header-border: var(--table-header-border);
+  --color-table-cell-border: var(--table-cell-border);
+  --color-best-bar: var(--best-bar);
+  --color-cat-p-fill: var(--cat-p-fill);
+  --color-cat-p-soft: var(--cat-p-soft);
+  --color-cat-p-border: var(--cat-p-border);
+  --color-cat-p-text: var(--cat-p-text);
+  --color-cat-g-fill: var(--cat-g-fill);
+  --color-cat-g-soft: var(--cat-g-soft);
+  --color-cat-g-border: var(--cat-g-border);
+  --color-cat-g-text: var(--cat-g-text);
+  --color-cat-t-fill: var(--cat-t-fill);
+  --color-cat-t-soft: var(--cat-t-soft);
+  --color-cat-t-border: var(--cat-t-border);
+  --color-cat-t-text: var(--cat-t-text);
+  --color-cat-nm-fill: var(--cat-nm-fill);
+  --color-cat-nm-soft: var(--cat-nm-soft);
+  --color-cat-nm-border: var(--cat-nm-border);
+  --color-cat-nm-text: var(--cat-nm-text);
+  --color-cat-nj-fill: var(--cat-nj-fill);
+  --color-cat-nj-soft: var(--cat-nj-soft);
+  --color-cat-nj-border: var(--cat-nj-border);
+  --color-cat-nj-text: var(--cat-nj-text);
+  --color-cat-ny-fill: var(--cat-ny-fill);
+  --color-cat-ny-soft: var(--cat-ny-soft);
+  --color-cat-ny-border: var(--cat-ny-border);
+  --color-cat-ny-text: var(--cat-ny-text);
+  --color-cat-ca-fill: var(--cat-ca-fill);
+  --color-cat-ca-soft: var(--cat-ca-soft);
+  --color-cat-ca-border: var(--cat-ca-border);
+  --color-cat-ca-text: var(--cat-ca-text);
+  --color-cat-ma-fill: var(--cat-ma-fill);
+  --color-cat-ma-soft: var(--cat-ma-soft);
+  --color-cat-ma-border: var(--cat-ma-border);
+  --color-cat-ma-text: var(--cat-ma-text);
+}
+
+@layer base {
+  @font-face {
+    font-family: "Soft Grotesk";
+    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Regular.otf") format("opentype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Soft Grotesk";
+    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Medium.otf") format("opentype");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Soft Grotesk";
+    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Bold.otf") format("opentype");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Tripsis";
+    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Regular.otf") format("opentype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Tripsis";
+    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Medium.otf") format("opentype");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Tripsis";
+    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Bold.otf") format("opentype");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --page-bg: #edf3f8;
+    --page-bg-alt: #e2eaf2;
+    --surface: #ffffff;
+    --surface-alt: #f7fbff;
+    --text: #102033;
+    --muted: #516173;
+    --subtle: #738192;
+    --border: #c9d5e1;
+    --border-strong: #8fa0b4;
+    --accent-federal: #2457d6;
+    --accent-state: #1e8e4a;
+    --chart-track: #dce5ef;
+    --chart-track-border: #c4cfdb;
+    --success-bg: #eaf7ef;
+    --success-border: #9dcdad;
+    --success-text: #1d4f31;
+    --warning-bg: #fff4cc;
+    --warning-border: #e0bf58;
+    --warning-text: #705500;
+    --selection-bg: #fff0b3;
+    --selection-border: #d39d00;
+    --selection-text: #2f2400;
+    --neutral-button-bg: #ffffff;
+    --neutral-button-text: #203147;
+    --neutral-button-border: #c9d5e1;
+    --neutral-button-active-bg: #223247;
+    --neutral-button-active-text: #ffffff;
+    --table-header-bg: #eef4fa;
+    --table-header-border: #9dacbd;
+    --table-cell-border: #d4dde7;
+    --best-bar: #2e7d32;
+    --cat-p-fill: #f4a7a7;
+    --cat-p-soft: #fff0f0;
+    --cat-p-border: #df7a7a;
+    --cat-p-text: #641818;
+    --cat-g-fill: #d8b4e2;
+    --cat-g-soft: #f8eefb;
+    --cat-g-border: #b98ac8;
+    --cat-g-text: #4f235e;
+    --cat-t-fill: #ffe28a;
+    --cat-t-soft: #fff9df;
+    --cat-t-border: #efc74d;
+    --cat-t-text: #6a5400;
+    --cat-nm-fill: #b7dfb6;
+    --cat-nm-soft: #edf8ed;
+    --cat-nm-border: #8bc18a;
+    --cat-nm-text: #1d4f1c;
+    --cat-nj-fill: #a6cdf7;
+    --cat-nj-soft: #edf5ff;
+    --cat-nj-border: #73a8dc;
+    --cat-nj-text: #1a4e7a;
+    --cat-ny-fill: #9bdad3;
+    --cat-ny-soft: #edf9f7;
+    --cat-ny-border: #64b7ae;
+    --cat-ny-text: #185f59;
+    --cat-ca-fill: #ffd59b;
+    --cat-ca-soft: #fff5e5;
+    --cat-ca-border: #e3af58;
+    --cat-ca-text: #7d4f00;
+    --cat-ma-fill: #c8b3ab;
+    --cat-ma-soft: #f6f1ef;
+    --cat-ma-border: #a6867d;
+    --cat-ma-text: #5d473f;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page-bg: #000000;
+    --page-bg-alt: #090909;
+    --surface: #111111;
+    --surface-alt: #161616;
+    --text: #f5f7fa;
+    --muted: #c1c8d2;
+    --subtle: #8e96a2;
+    --border: #2e2e2e;
+    --border-strong: #4a4a4a;
+    --accent-federal: #8eb7ff;
+    --accent-state: #8ad39a;
+    --chart-track: #121212;
+    --chart-track-border: #2a2a2a;
+    --success-bg: #0b140d;
+    --success-border: #255236;
+    --success-text: #e0f5e6;
+    --warning-bg: #171300;
+    --warning-border: #6f560e;
+    --warning-text: #ffebaf;
+    --selection-bg: #201800;
+    --selection-border: #d1a21f;
+    --selection-text: #fff4cf;
+    --neutral-button-bg: #111111;
+    --neutral-button-text: #f5f7fa;
+    --neutral-button-border: #2f2f2f;
+    --neutral-button-active-bg: #e7edf4;
+    --neutral-button-active-text: #111111;
+    --table-header-bg: #101010;
+    --table-header-border: #383838;
+    --table-cell-border: #242424;
+    --best-bar: #16a34a;
+    --cat-p-fill: #ff6f63;
+    --cat-p-soft: #2c1617;
+    --cat-p-border: #ff8c80;
+    --cat-p-text: #ffe4e2;
+    --cat-g-fill: #c89bf0;
+    --cat-g-soft: #241c31;
+    --cat-g-border: #d6b2f6;
+    --cat-g-text: #f4ebff;
+    --cat-t-fill: #ffd24d;
+    --cat-t-soft: #2a240f;
+    --cat-t-border: #ffe08a;
+    --cat-t-text: #fff2c2;
+    --cat-nm-fill: #84d784;
+    --cat-nm-soft: #162118;
+    --cat-nm-border: #a9dda9;
+    --cat-nm-text: #e5fae5;
+    --cat-nj-fill: #5fb8ff;
+    --cat-nj-soft: #102131;
+    --cat-nj-border: #92cbff;
+    --cat-nj-text: #d9eeff;
+    --cat-ny-fill: #57cfc4;
+    --cat-ny-soft: #112623;
+    --cat-ny-border: #8cd5cd;
+    --cat-ny-text: #ddfffb;
+    --cat-ca-fill: #ffbf55;
+    --cat-ca-soft: #2c2211;
+    --cat-ca-border: #ffd08c;
+    --cat-ca-text: #ffe9c6;
+    --cat-ma-fill: #b89f96;
+    --cat-ma-soft: #241f1d;
+    --cat-ma-border: #ccb5ad;
+    --cat-ma-text: #f2e9e6;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply m-0 bg-page text-text font-body;
+  }
+}

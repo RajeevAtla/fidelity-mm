@@ -1,3 +1,4 @@
+import "./tailwind.generated.css";
 import { render } from "preact";
 import App from "./index";
 import { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./theme";
