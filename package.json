@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "bunx --bun farm start",
     "build": "bunx --bun farm build",
-    "preview": "bunx --bun farm preview"
+    "preview": "bunx --bun farm preview",
+    "scrape:fidelity": "bun scripts/scrape-fidelity-mm.ts"
   },
   "type": "module",
   "dependencies": {
