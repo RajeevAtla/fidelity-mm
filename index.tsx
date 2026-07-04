@@ -1,4 +1,17 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "preact/hooks";
+
+type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+type CategoryFilter = Category | "all";
+type Fund = {
+  t: string;
+  n: string;
+  y: number;
+  er: number;
+  c: Category;
+  se: number;
+  mn: string;
+};
+type FundResult = Fund & { a: number };
 
 const fedB = [
   { r: 10, l: "10% · $0–$11.6K" },
@@ -21,7 +34,7 @@ const njB = [
 
 // cat: p=prime, g=govt, t=treasury, nm=natl muni, nj=NJ muni, ny=NY muni, ca=CA muni, ma=MA muni
 // se: state exempt % for NJ resident. fedEx: true=fed tax exempt
-const F = [
+const F: Fund[] = [
   // PRIME
   { t:"FNSXX", n:"FIMM Money Market Portfolio - Instl Class", y:3.65, er:0.14, c:"p", se:4, mn:"$10M" },
   { t:"FMPXX", n:"FIMM Money Market Portfolio - Class I", y:3.58, er:0.18, c:"p", se:4, mn:"$10M" },
@@ -75,28 +88,29 @@ const F = [
   { t:"FABXX", n:"CA Muni MM Fund", y:1.81, er:0.48, c:"ca", se:0, mn:"$0" },
 ];
 
-const CL = { p:"Prime", g:"Government", t:"Treasury", nm:"Natl Muni", nj:"NJ Muni", ny:"NY Muni", ca:"CA Muni", ma:"MA Muni" };
-const CC = { p:"#ef9a9a", g:"#ce93d8", t:"#fff59d", nm:"#a5d6a7", nj:"#90caf9", ny:"#80cbc4", ca:"#ffcc80", ma:"#bcaaa4" };
-const isMuni = c => ["nm","nj","ny","ca","ma"].includes(c);
+const CL: Record<Category, string> = { p:"Prime", g:"Government", t:"Treasury", nm:"Natl Muni", nj:"NJ Muni", ny:"NY Muni", ca:"CA Muni", ma:"MA Muni" };
+const CC: Record<Category, string> = { p:"#ef9a9a", g:"#ce93d8", t:"#fff59d", nm:"#a5d6a7", nj:"#90caf9", ny:"#80cbc4", ca:"#ffcc80", ma:"#bcaaa4" };
+const isMuni = (c: Category) => ["nm","nj","ny","ca","ma"].includes(c);
 
-function at(f, fr, nr) {
+function at(f: Fund, fr: number, nr: number) {
   if (isMuni(f.c) && f.se >= 100) return f.y;
   if (isMuni(f.c)) return f.y - f.y * (1 - f.se/100) * (nr/100);
   return f.y - f.y*(fr/100) - f.y*(1-f.se/100)*(nr/100);
 }
 
-const allCats = ["all","p","g","t","nm","nj","ny","ca","ma"];
+const allCats: CategoryFilter[] = ["all","p","g","t","nm","nj","ny","ca","ma"];
+const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
 
 export default function App() {
   const [fi, setFi] = useState(1);
   const [ni, setNi] = useState(1);
-  const [fc, setFc] = useState("all");
+  const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
 
   const fr = fedB[fi].r, nr = njB[ni].r;
 
   const res = useMemo(() => {
-    let l = F.map(f => ({ ...f, a: at(f, fr, nr) }));
+    let l: FundResult[] = F.map(f => ({ ...f, a: at(f, fr, nr) }));
     if (fc !== "all") l = l.filter(f => f.c === fc);
     return l.sort((a, b) => b.a - a.a);
   }, [fi, ni, fc]);
@@ -129,7 +143,7 @@ export default function App() {
             <span style={{ fontSize:12, fontWeight:600 }}>Federal Bracket</span>
             <span style={{ fontSize:13, fontWeight:700, color:"#1565c0" }}>{fedB[fi].l}</span>
           </div>
-          <input type="range" min={0} max={6} value={fi} onChange={e=>setFi(+e.target.value)} style={{ width:"100%" }}/>
+          <input type="range" min={0} max={6} value={fi} onInput={e=>setFi(rangeValue(e))} style={{ width:"100%" }}/>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"#aaa" }}>
             {fedB.map(b=><span key={b.r}>{b.r}%</span>)}
           </div>
@@ -139,7 +153,7 @@ export default function App() {
             <span style={{ fontSize:12, fontWeight:600 }}>NJ State Bracket</span>
             <span style={{ fontSize:13, fontWeight:700, color:"#2e7d32" }}>{njB[ni].l}</span>
           </div>
-          <input type="range" min={0} max={6} value={ni} onChange={e=>setNi(+e.target.value)} style={{ width:"100%" }}/>
+          <input type="range" min={0} max={6} value={ni} onInput={e=>setNi(rangeValue(e))} style={{ width:"100%" }}/>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"#aaa" }}>
             {njB.map(b=><span key={b.r}>{b.r}%</span>)}
           </div>
@@ -237,7 +251,7 @@ export default function App() {
 
       <div style={{ marginTop:10, fontSize:9, color:"#999", lineHeight:1.5 }}>
         <strong>Legend:</strong>{" "}
-        {Object.entries(CL).map(([k,v])=>(
+        {(Object.entries(CL) as [Category, string][]).map(([k,v])=>(
           <span key={k} style={{ background:CC[k], padding:"1px 5px", borderRadius:3, marginRight:3 }}>{v}</span>
         ))}
         <br/>Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER. Not financial advice.
