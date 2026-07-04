@@ -3,6 +3,8 @@ name: Refresh Fidelity Data
 on:
   schedule:
     - cron: "0 0 * * 1-5"
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
