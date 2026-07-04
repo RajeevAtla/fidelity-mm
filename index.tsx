@@ -183,12 +183,12 @@ function readStoredThemeMode(): ThemeMode {
 
 function buttonStyle(theme: (typeof THEMES)["light"], active: boolean) {
   return {
-    padding: "6px 10px",
-    borderRadius: 8,
+    padding: "5px 10px",
+    borderRadius: 6,
     border: `1px solid ${active ? theme.borderStrong : theme.neutralButtonBorder}`,
     background: active ? theme.neutralButtonActiveBg : theme.neutralButtonBg,
     color: active ? theme.neutralButtonActiveText : theme.neutralButtonText,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: active ? 700 : 500,
     cursor: "pointer",
     lineHeight: 1,
@@ -263,7 +263,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
   const shellStyle = {
     minHeight: "100vh",
-    background: `linear-gradient(180deg, ${theme.pageBg} 0%, ${theme.pageBgAlt} 100%)`,
+    background: theme.pageBg,
     color: theme.text,
     fontFamily: theme.fontBody,
     fontVariantNumeric: "tabular-nums",
@@ -477,9 +477,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                     width: `${w}%`,
                     height: "100%",
                     borderRadius: 6,
-                    background: best
-                      ? `linear-gradient(90deg, ${theme.bestBarStart}, ${theme.bestBarEnd})`
-                      : tone.fill,
+                    background: best ? theme.bestBarFill : tone.fill,
                     transition: "width .25s ease",
                   }}
                 />
@@ -493,7 +491,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                     color: best ? theme.successText : theme.text,
                   }}
                 >
-                  {r.a.toFixed(3)}%{best ? " 🏆" : ""}
+                  {r.a.toFixed(3)}%
                 </span>
               </div>
               <div
@@ -557,7 +555,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             style={{
               padding: 12,
               background: theme.successBg,
-              borderRadius: 8,
+              borderRadius: 6,
               border: `1px solid ${theme.successBorder}`,
               margin: "10px 0",
               boxShadow: theme.cardShadow,
@@ -674,7 +672,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                 color: theme.category[k].text,
                 border: `1px solid ${theme.category[k].border}`,
                 padding: "1px 5px",
-                borderRadius: 4,
+                borderRadius: 3,
                 marginRight: 3,
                 display: "inline-block",
               }}

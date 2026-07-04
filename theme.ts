@@ -42,8 +42,7 @@ export type ThemeTokens = {
   tableHeaderBorder: string;
   tableCellBorder: string;
   cardShadow: string;
-  bestBarStart: string;
-  bestBarEnd: string;
+  bestBarFill: string;
   fontBody: string;
   fontDisplay: string;
   category: Record<Category, CategoryTone>;
@@ -155,8 +154,7 @@ export const THEMES: Record<ResolvedTheme, ThemeTokens> = {
     tableHeaderBorder: "#9dacbd",
     tableCellBorder: "#d4dde7",
     cardShadow: "0 8px 22px rgba(16, 32, 51, 0.08)",
-    bestBarStart: "#2e7d32",
-    bestBarEnd: "#66bb6a",
+    bestBarFill: "#2e7d32",
     fontBody: FONT_BODY,
     fontDisplay: FONT_DISPLAY,
     category: LIGHT_CATEGORY,
@@ -193,8 +191,7 @@ export const THEMES: Record<ResolvedTheme, ThemeTokens> = {
     tableHeaderBorder: "#383838",
     tableCellBorder: "#242424",
     cardShadow: "0 14px 30px rgba(0, 0, 0, 0.5)",
-    bestBarStart: "#16a34a",
-    bestBarEnd: "#22c55e",
+    bestBarFill: "#16a34a",
     fontBody: FONT_BODY,
     fontDisplay: FONT_DISPLAY,
     category: DARK_CATEGORY,
