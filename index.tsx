@@ -520,7 +520,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                         className={cx(
                           "border px-[2px] py-1 text-center",
                           act
-                            ? "border-selection-border bg-selection-bg"
+                            ? "relative z-10 border-transparent bg-selection-bg ring-2 ring-inset ring-selection-border"
                             : cx("border-table-cell-border", tone),
                         )}
                       >
