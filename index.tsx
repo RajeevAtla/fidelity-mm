@@ -268,8 +268,19 @@ const categoryLegendClasses: Record<Category, string> = {
   ma: "bg-cat-ma-soft text-cat-ma-text border-cat-ma-border",
 };
 
-function barPercent(value: number) {
-  return Math.max(0, Math.min(100, Math.round((value / 3.7) * 1000) / 10));
+function barPercent(value: number, min: number, max: number) {
+  const span = max - min;
+  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) {
+    return 0;
+  }
+  if (span <= 0) {
+    return 100;
+  }
+
+  const normalized = Math.max(0, Math.min(1, (value - min) / span));
+  const curved = Math.pow(normalized, 0.72);
+  const width = 12 + curved * 88;
+  return Math.round(Math.max(0, Math.min(100, width)));
 }
 
 function barWidthClass(value: number) {
@@ -334,6 +345,20 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     if (fc !== "all") l = l.filter((f) => f.c === fc);
     return l.sort((a, b) => b.a - a.a);
   }, [fr, nr, fc]);
+
+  const widthRange = useMemo(() => {
+    if (res.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    return res.reduce(
+      (acc, fund) => ({
+        min: Math.min(acc.min, fund.a),
+        max: Math.max(acc.max, fund.a),
+      }),
+      { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
+    );
+  }, [res]);
 
   const top = res[0];
   const show = showAll ? res : res.slice(0, 15);
@@ -454,7 +479,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         <div className="space-y-[3px]">
           {show.map((r, i) => {
             const best = i === 0;
-            const w = barPercent(r.a);
+            const w = barPercent(r.a, widthRange.min, widthRange.max);
             const fillClass = best ? "bg-best-bar" : categoryFillClasses[r.c];
             return (
               <div
