@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import allClassRates from "./data/fidelity-mm-allclass.json";
 
 type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 type CategoryFilter = Category | "all";
@@ -12,6 +13,67 @@ type Fund = {
   mn: string;
 };
 type FundResult = Fund & { a: number };
+type RateSheetFund = {
+  symbol: string | null;
+  name: string;
+  section: string | null;
+  sevenDayYield: number | null;
+  expenseRatioNet: number | null;
+  expenseRatioGross: number | null;
+};
+type RateSheetData = {
+  sheetTitle: string | null;
+  requestedPriceDate: string | null;
+  funds: RateSheetFund[];
+};
+type FundRule = {
+  c: Category;
+  njExemptPct: number;
+  mn: string;
+};
+
+const FUND_RULES: Record<string, FundRule> = {
+  FNSXX: { c: "p", njExemptPct: 4, mn: "$10M" },
+  FRGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
+  FRBXX: { c: "t", njExemptPct: 51, mn: "$10M" },
+  FRSXX: { c: "t", njExemptPct: 97, mn: "$10M" },
+  FMPXX: { c: "p", njExemptPct: 4, mn: "$10M" },
+  FIGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
+  FISXX: { c: "t", njExemptPct: 51, mn: "$10M" },
+  FSIXX: { c: "t", njExemptPct: 97, mn: "$10M" },
+  FTCXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
+  FMYXX: { c: "p", njExemptPct: 4, mn: "$0" },
+  FGEXX: { c: "g", njExemptPct: 55, mn: "$0" },
+  FTUXX: { c: "t", njExemptPct: 51, mn: "$0" },
+  FTYXX: { c: "t", njExemptPct: 97, mn: "$0" },
+  FSXXX: { c: "nm", njExemptPct: 0, mn: "$0" },
+  FCIXX: { c: "p", njExemptPct: 4, mn: "$10M" },
+  FCVXX: { c: "g", njExemptPct: 55, mn: "$10M" },
+  FCEXX: { c: "t", njExemptPct: 51, mn: "$10M" },
+  FOXXX: { c: "t", njExemptPct: 97, mn: "$10M" },
+  FEXXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
+  FCOXX: { c: "p", njExemptPct: 4, mn: "$10M" },
+  FCGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
+  FCSXX: { c: "t", njExemptPct: 51, mn: "$10M" },
+  FOIXX: { c: "t", njExemptPct: 97, mn: "$10M" },
+  FETXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
+  FTVXX: { c: "t", njExemptPct: 51, mn: "$10M" },
+  FOPXX: { c: "t", njExemptPct: 97, mn: "$10M" },
+  FZDXX: { c: "p", njExemptPct: 4, mn: "$100K" },
+  FZCXX: { c: "g", njExemptPct: 55, mn: "$100K" },
+  FZEXX: { c: "nm", njExemptPct: 0, mn: "$100K" },
+  FZBXX: { c: "g", njExemptPct: 55, mn: "$0" },
+  FDUXX: { c: "t", njExemptPct: 51, mn: "$0" },
+  FDEXX: { c: "nm", njExemptPct: 0, mn: "$0" },
+  FZAXX: { c: "g", njExemptPct: 55, mn: "$0" },
+  FSRXX: { c: "t", njExemptPct: 51, mn: "$0" },
+  FERXX: { c: "nm", njExemptPct: 0, mn: "$0" },
+  FSBXX: { c: "ca", njExemptPct: 0, mn: "$1M" },
+  FMAXX: { c: "ma", njExemptPct: 0, mn: "$1M" },
+  FSKXX: { c: "nj", njExemptPct: 100, mn: "$1M" },
+  FNKXX: { c: "ny", njExemptPct: 0, mn: "$1M" },
+  FZGXX: { c: "g", njExemptPct: 55, mn: "$0" },
+};
 
 const fedB = [
   { r: 10, l: "10% · $0–$11.6K" },
@@ -32,65 +94,49 @@ const njB = [
   { r: 10.75, l: "10.75% · $1M+" },
 ];
 
-// cat: p=prime, g=govt, t=treasury, nm=natl muni, nj=NJ muni, ny=NY muni, ca=CA muni, ma=MA muni
-// se: state exempt % for NJ resident. fedEx: true=fed tax exempt
-const F: Fund[] = [
-  // PRIME
-  { t:"FNSXX", n:"FIMM Money Market Portfolio - Instl Class", y:3.65, er:0.14, c:"p", se:4, mn:"$10M" },
-  { t:"FMPXX", n:"FIMM Money Market Portfolio - Class I", y:3.58, er:0.18, c:"p", se:4, mn:"$10M" },
-  { t:"FCIXX", n:"FIMM Money Market Portfolio - Class II", y:3.47, er:0.28, c:"p", se:4, mn:"$1M" },
-  { t:"FZDXX", n:"Money Market Fund Premium Class", y:3.46, er:0.36, c:"p", se:4, mn:"$100K" },
-  { t:"SPRXX", n:"Money Market Fund", y:3.34, er:0.42, c:"p", se:4, mn:"$0" },
-  // GOVERNMENT
-  { t:"FRGXX", n:"FIMM Gov't Portfolio - Instl Class", y:3.57, er:0.10, c:"g", se:55, mn:"$10M" },
-  { t:"FIGXX", n:"FIMM Gov't Portfolio - Class I", y:3.53, er:0.18, c:"g", se:55, mn:"$10M" },
-  { t:"FCVXX", n:"FIMM Gov't Portfolio - Class II", y:3.37, er:0.34, c:"g", se:55, mn:"$1M" },
-  { t:"FCGXX", n:"FIMM Gov't Portfolio - Class III", y:3.27, er:0.44, c:"g", se:55, mn:"$0" },
-  { t:"FZCXX", n:"Gov't MM Fund Premium Class", y:3.38, er:0.32, c:"g", se:55, mn:"$100K" },
-  { t:"SPAXX", n:"Gov't Money Market Fund", y:3.29, er:0.42, c:"g", se:55, mn:"$0" },
-  { t:"FDRXX", n:"Gov't Cash Reserves", y:3.37, er:0.34, c:"g", se:57, mn:"$0" },
-  { t:"FZBXX", n:"Gov't MM Daily Money Class", y:3.00, er:0.52, c:"g", se:55, mn:"$0" },
-  { t:"FZAXX", n:"Gov't MM Capital Reserves Class", y:2.75, er:0.77, c:"g", se:55, mn:"$0" },
-  // TREASURY
-  { t:"FRBXX", n:"FIMM Treasury Portfolio - Instl Class", y:3.59, er:0.10, c:"t", se:51, mn:"$10M" },
-  { t:"FRSXX", n:"FIMM Treasury Only Portfolio - Instl Class", y:3.57, er:0.10, c:"t", se:97, mn:"$10M" },
-  { t:"FSIXX", n:"FIMM Treasury Only Portfolio - Class I", y:3.47, er:0.18, c:"t", se:97, mn:"$1M" },
-  { t:"FCEXX", n:"FIMM Treasury Portfolio - Class II", y:3.40, er:0.25, c:"t", se:51, mn:"$1M" },
-  { t:"FOXXX", n:"FIMM Treasury Only Portfolio - Class II", y:3.38, er:0.25, c:"t", se:97, mn:"$1M" },
-  { t:"FOIXX", n:"FIMM Treasury Only Portfolio - Class III", y:3.28, er:0.35, c:"t", se:97, mn:"$0" },
-  { t:"FZFXX", n:"Treasury Money Market Fund", y:3.31, er:0.42, c:"t", se:51, mn:"$0" },
-  { t:"FDLXX", n:"Treasury Only Money Market Fund", y:3.29, er:0.42, c:"t", se:97, mn:"$0" },
-  { t:"FDUXX", n:"Treasury MM Daily Money Class", y:3.03, er:0.52, c:"t", se:51, mn:"$0" },
-  { t:"FSRXX", n:"Treasury MM Capital Reserves Class", y:2.78, er:0.77, c:"t", se:51, mn:"$0" },
-  { t:"FDCXX", n:"Treasury MM Advisor Class C", y:2.28, er:1.28, c:"t", se:51, mn:"$0" },
-  // NATIONAL MUNI
-  { t:"FTCXX", n:"FIMM Tax Exempt Portfolio - Class I", y:2.30, er:0.18, c:"nm", se:0, mn:"$10M" },
-  { t:"FZEXX", n:"Tax-Exempt MM Premium Class", y:2.19, er:0.26, c:"nm", se:0, mn:"$100K" },
-  { t:"FTEXX", n:"Municipal Money Market Fund", y:2.18, er:0.40, c:"nm", se:0, mn:"$0" },
-  { t:"FMOXX", n:"Tax-Exempt Money Market Fund", y:2.14, er:0.47, c:"nm", se:0, mn:"$0" },
-  { t:"FDEXX", n:"Tax-Exempt MM Daily Money Class", y:1.86, er:0.62, c:"nm", se:0, mn:"$0" },
-  { t:"FERXX", n:"Tax-Exempt MM Capital Reserves", y:1.61, er:0.87, c:"nm", se:0, mn:"$0" },
-  // NJ MUNI
-  { t:"FSKXX", n:"NJ Muni MM - Instl Class", y:2.14, er:0.20, c:"nj", se:100, mn:"$1M" },
-  { t:"FSJXX", n:"NJ Muni MM Premium Class", y:2.03, er:0.36, c:"nj", se:100, mn:"$100K" },
-  { t:"FAYXX", n:"NJ Muni MM Fund", y:1.85, er:0.48, c:"nj", se:100, mn:"$0" },
-  // NY MUNI
-  { t:"FNKXX", n:"NY Muni MM - Instl Class", y:2.31, er:0.20, c:"ny", se:0, mn:"$1M" },
-  { t:"FSNXX", n:"NY Muni MM Premium Class", y:2.21, er:0.36, c:"ny", se:0, mn:"$100K" },
-  { t:"FAWXX", n:"NY Muni MM Fund", y:2.04, er:0.48, c:"ny", se:0, mn:"$0" },
-  // MA MUNI
-  { t:"FMAXX", n:"MA Muni MM - Instl Class", y:2.18, er:0.20, c:"ma", se:0, mn:"$1M" },
-  { t:"FMSXX", n:"MA Muni MM Premium Class", y:2.11, er:0.36, c:"ma", se:0, mn:"$100K" },
-  { t:"FAUXX", n:"MA Muni MM Fund", y:1.93, er:0.48, c:"ma", se:0, mn:"$0" },
-  // CA MUNI
-  { t:"FSBXX", n:"CA Muni MM - Instl Class", y:2.06, er:0.20, c:"ca", se:0, mn:"$1M" },
-  { t:"FSPXX", n:"CA Muni MM Premium Class", y:1.99, er:0.36, c:"ca", se:0, mn:"$100K" },
-  { t:"FABXX", n:"CA Muni MM Fund", y:1.81, er:0.48, c:"ca", se:0, mn:"$0" },
-];
+function buildFunds(rateSheet: RateSheetData): Fund[] {
+  return rateSheet.funds
+    .filter((fund) => fund.symbol && fund.sevenDayYield !== null)
+    .map((fund) => {
+      const rule = FUND_RULES[fund.symbol ?? ""];
+      if (!rule) {
+        throw new Error(`Missing fund rule for ${fund.symbol ?? "unknown symbol"}`);
+      }
+      return {
+        t: fund.symbol ?? "",
+        n: displayName(fund),
+        y: fund.sevenDayYield ?? 0,
+        er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
+        c: rule.c,
+        se: rule.njExemptPct,
+        mn: rule.mn,
+      };
+    });
+}
 
 const CL: Record<Category, string> = { p:"Prime", g:"Government", t:"Treasury", nm:"Natl Muni", nj:"NJ Muni", ny:"NY Muni", ca:"CA Muni", ma:"MA Muni" };
 const CC: Record<Category, string> = { p:"#ef9a9a", g:"#ce93d8", t:"#fff59d", nm:"#a5d6a7", nj:"#90caf9", ny:"#80cbc4", ca:"#ffcc80", ma:"#bcaaa4" };
 const isMuni = (c: Category) => ["nm","nj","ny","ca","ma"].includes(c);
+
+function displayName(fund: RateSheetFund) {
+  const sectionParts = (fund.section ?? "").split(":");
+  const classLabel = cleanLabel(sectionParts[sectionParts.length - 1] ?? "");
+  const name = cleanLabel(fund.name);
+  return classLabel && !name.toLowerCase().includes(classLabel.toLowerCase())
+    ? `${name} - ${classLabel}`
+    : name;
+}
+
+function cleanLabel(value: string) {
+  return value
+    .replace(/\s*\d+(?:,\d+)*,?\*?$/g, "")
+    .replace(/\s*\*+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const rateSheet = allClassRates as RateSheetData;
+const F = buildFunds(rateSheet);
 
 function at(f: Fund, fr: number, nr: number) {
   if (isMuni(f.c) && f.se >= 100) return f.y;
@@ -107,13 +153,14 @@ export default function App() {
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
 
+  const rateDate = rateSheet.requestedPriceDate ?? "latest scrape";
   const fr = fedB[fi].r, nr = njB[ni].r;
 
   const res = useMemo(() => {
     let l: FundResult[] = F.map(f => ({ ...f, a: at(f, fr, nr) }));
     if (fc !== "all") l = l.filter(f => f.c === fc);
     return l.sort((a, b) => b.a - a.a);
-  }, [fi, ni, fc]);
+  }, [F, fi, ni, fc]);
 
   const top = res[0];
   const show = showAll ? res : res.slice(0, 15);
@@ -127,13 +174,13 @@ export default function App() {
         return best;
       })
     }));
-  }, []);
+  }, [F]);
 
   return (
     <div style={{ fontFamily:"system-ui,sans-serif", maxWidth:920, margin:"0 auto", padding:12 }}>
       <h2 style={{ margin:"0 0 2px", fontSize:18 }}>All {F.length} Fidelity Money Market Funds — After-Tax Yield</h2>
       <p style={{ color:"#666", fontSize:11, margin:"0 0 14px" }}>
-        7-day yields as of 3/30/2026, net of expense ratio. Single filer brackets (2025 tax year). For NJ residents.
+      7-day yields as of {rateDate}, from the scraped Fidelity all-class money market sheet. Single filer brackets (2025 tax year). For NJ residents.
       </p>
 
       {/* Sliders */}
