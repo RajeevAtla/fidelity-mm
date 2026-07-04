@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @source "./index.tsx";
 @source "./main.tsx";
-@source "./theme.ts";
+@source "./bar-widths.ts";
 
 @theme {
   --font-body: "Soft Grotesk", "Soft Grotesk L", system-ui, sans-serif;

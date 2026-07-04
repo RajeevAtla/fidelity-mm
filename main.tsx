@@ -1,7 +1,6 @@
 import "./tailwind.generated.css";
 import { render } from "preact";
-import App from "./index";
-import { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./theme";
+import App, { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./index";
 
 const initialThemeMode = getStoredThemeMode();
 applyThemeToDocument(resolveThemeMode(initialThemeMode));
