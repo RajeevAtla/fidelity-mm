@@ -45,6 +45,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
-          DATE_UTC=$(date -u +%Y-%m-%d)
-          git commit -m "✨ Refresh Fidelity data ($DATE_UTC)"
+          DATETIME_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          git commit -m "✨ Refresh Fidelity data ($DATETIME_UTC)"
           git push
