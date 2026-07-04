@@ -44,10 +44,61 @@ export type ThemeTokens = {
   cardShadow: string;
   bestBarStart: string;
   bestBarEnd: string;
+  fontBody: string;
+  fontDisplay: string;
   category: Record<Category, CategoryTone>;
 };
 
 export const THEME_STORAGE_KEY = "fidelity-mm-theme-mode";
+const FONT_STYLE_ID = "fidelity-mm-font-faces";
+const FONT_BODY = '"Soft Grotesk", "Soft Grotesk L", system-ui, sans-serif';
+const FONT_DISPLAY = '"Tripsis", "Tripsis L", Georgia, serif';
+const FONT_ASSET_BASE = "/fidelity-mm/fonts";
+
+const FONT_FACE_CSS = `
+@font-face {
+  font-family: "Soft Grotesk";
+  src: url("${FONT_ASSET_BASE}/SoftGrotesk/SoftGroteskTestL-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Soft Grotesk";
+  src: url("${FONT_ASSET_BASE}/SoftGrotesk/SoftGroteskTestL-Medium.otf") format("opentype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Soft Grotesk";
+  src: url("${FONT_ASSET_BASE}/SoftGrotesk/SoftGroteskTestL-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tripsis";
+  src: url("${FONT_ASSET_BASE}/Test-Tripsis/TripsisTest-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tripsis";
+  src: url("${FONT_ASSET_BASE}/Test-Tripsis/TripsisTest-Medium.otf") format("opentype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tripsis";
+  src: url("${FONT_ASSET_BASE}/Test-Tripsis/TripsisTest-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+`;
 
 const LIGHT_CATEGORY: Record<Category, CategoryTone> = {
   p: { fill: "#f4a7a7", soft: "#fff0f0", border: "#df7a7a", text: "#641818" },
@@ -106,6 +157,8 @@ export const THEMES: Record<ResolvedTheme, ThemeTokens> = {
     cardShadow: "0 8px 22px rgba(16, 32, 51, 0.08)",
     bestBarStart: "#2e7d32",
     bestBarEnd: "#66bb6a",
+    fontBody: FONT_BODY,
+    fontDisplay: FONT_DISPLAY,
     category: LIGHT_CATEGORY,
   },
   dark: {
@@ -142,6 +195,8 @@ export const THEMES: Record<ResolvedTheme, ThemeTokens> = {
     cardShadow: "0 14px 30px rgba(0, 0, 0, 0.5)",
     bestBarStart: "#16a34a",
     bestBarEnd: "#22c55e",
+    fontBody: FONT_BODY,
+    fontDisplay: FONT_DISPLAY,
     category: DARK_CATEGORY,
   },
 };
@@ -180,6 +235,7 @@ export function applyThemeToDocument(theme: ResolvedTheme) {
     return;
   }
 
+  ensureFontFacesInjected();
   const tokens = THEMES[theme];
   const root = document.documentElement;
   const body = document.body;
@@ -189,6 +245,7 @@ export function applyThemeToDocument(theme: ResolvedTheme) {
   root.style.backgroundColor = tokens.pageBg;
   body.style.backgroundColor = tokens.pageBg;
   body.style.color = tokens.text;
+  body.style.fontFamily = tokens.fontBody;
   body.style.margin = "0";
   body.style.minHeight = "100vh";
 
@@ -199,4 +256,15 @@ export function applyThemeToDocument(theme: ResolvedTheme) {
     document.head.appendChild(themeMeta);
   }
   themeMeta.content = tokens.pageBg;
+}
+
+function ensureFontFacesInjected() {
+  if (typeof document === "undefined" || document.getElementById(FONT_STYLE_ID)) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = FONT_STYLE_ID;
+  style.textContent = FONT_FACE_CSS;
+  document.head.appendChild(style);
 }

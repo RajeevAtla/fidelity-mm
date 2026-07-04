@@ -265,7 +265,8 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     minHeight: "100vh",
     background: `linear-gradient(180deg, ${theme.pageBg} 0%, ${theme.pageBgAlt} 100%)`,
     color: theme.text,
-    fontFamily: "system-ui,sans-serif",
+    fontFamily: theme.fontBody,
+    fontVariantNumeric: "tabular-nums",
   } as const;
 
   const containerStyle = {
@@ -278,6 +279,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     fontSize: 12,
     fontWeight: 600,
     color: theme.text,
+    fontFamily: theme.fontBody,
   } as const;
 
   const sliderMetaStyle = {
@@ -304,7 +306,16 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <h2 style={{ margin: "0 0 3px", fontSize: 18, lineHeight: 1.25 }}>
+            <h2
+              style={{
+                margin: "0 0 3px",
+                fontSize: 18,
+                lineHeight: 1.18,
+                fontFamily: theme.fontDisplay,
+                fontWeight: 700,
+                letterSpacing: 0,
+              }}
+            >
               All {F.length} Fidelity Money Market Funds — After-Tax Yield
             </h2>
             <p style={{ color: theme.muted, fontSize: 11, margin: 0, lineHeight: 1.45 }}>
@@ -325,7 +336,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               boxShadow: theme.cardShadow,
             }}
           >
-            <span style={{ fontSize: 11, fontWeight: 700, color: theme.subtle }}>Theme</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: theme.subtle, fontFamily: theme.fontBody }}>
+              Theme
+            </span>
             <div style={{ display: "inline-flex", gap: 4 }}>
               {(["system", "light", "dark"] as ThemeMode[]).map((mode) => (
                 <button
@@ -346,7 +359,14 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           <div style={{ flex: 1, minWidth: 280 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={sectionLabelStyle}>Federal Bracket</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: theme.accentFederal }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: theme.accentFederal,
+                  fontFamily: theme.fontBody,
+                }}
+              >
                 {fedB[fi].l}
               </span>
             </div>
@@ -367,7 +387,14 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           <div style={{ flex: 1, minWidth: 280 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={sectionLabelStyle}>NJ State Bracket</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: theme.accentState }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: theme.accentState,
+                  fontFamily: theme.fontBody,
+                }}
+              >
                 {njB[ni].l}
               </span>
             </div>
@@ -549,7 +576,17 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         )}
 
-        <h3 style={{ margin: "16px 0 4px", fontSize: 14 }}>Winner at Every Bracket Combination</h3>
+        <h3
+          style={{
+            margin: "16px 0 4px",
+            fontSize: 14,
+            fontFamily: theme.fontDisplay,
+            fontWeight: 700,
+            letterSpacing: 0,
+          }}
+        >
+          Winner at Every Bracket Combination
+        </h3>
         <div style={{ overflowX: "auto" }}>
           <table style={{ borderCollapse: "collapse", fontSize: 10, width: "100%" }}>
             <thead>
