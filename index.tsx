@@ -287,6 +287,12 @@ function barWidthClass(value: number) {
   return BAR_WIDTH_CLASSES[Math.max(0, Math.min(100, Math.round(value)))] ?? BAR_WIDTH_CLASSES[0];
 }
 
+function formatAnnualValue(afterTaxYield: number) {
+  return ((afterTaxYield / 100) * 1e7).toLocaleString(undefined, {
+    maximumFractionDigits: 0,
+  });
+}
+
 function buttonClasses(active: boolean, tone?: string) {
   return cx(
     buttonBase,
@@ -538,16 +544,68 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         )}
 
         {top && (
-          <div className="my-2.5 rounded-md border border-success-border bg-success-bg p-3 text-success-text shadow-sm">
-            <strong className="text-[14px]">Best: {top.t}</strong> — {top.n} ({CL[top.c]})
-            <br />
-            <span className="text-[12px]">
-              After-tax yield: <strong>{top.a.toFixed(3)}%</strong> · Gross:{" "}
-              {top.y.toFixed(2)}% · ER: {top.er}% · Min: {top.mn}
-              <br />
-              On $10M ≈{" "}
-              <strong>${((top.a / 100) * 1e7).toLocaleString(undefined, { maximumFractionDigits: 0 })}/yr</strong>
-            </span>
+          <div className="my-2.5 overflow-hidden rounded-lg border border-success-border bg-success-bg shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-success-border/70 px-3 py-3">
+              <div className="min-w-0">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-success-border bg-page px-2 py-[2px] text-[9px] font-bold uppercase tracking-[0.08em] text-success-text">
+                    Best current fund
+                  </span>
+                  <span className={cx("rounded-full border px-2 py-[2px] text-[9px] font-bold uppercase tracking-[0.08em]", categoryLegendClasses[top.c])}>
+                    {CL[top.c]}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display text-[15px] font-bold leading-[1.15] text-text">
+                    {top.t}
+                  </div>
+                  <div className="mt-[2px] max-w-[42rem] text-[12px] leading-[1.35] text-success-text">
+                    {top.n}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-success-border bg-page px-3 py-2 text-right">
+                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                  After-tax yield
+                </div>
+                <div className="font-display text-[26px] font-bold leading-none text-success-text">
+                  {top.a.toFixed(3)}%
+                </div>
+                <div className="mt-1 text-[10px] text-muted">
+                  Winner at current brackets
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-px bg-success-border/70 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="bg-page px-3 py-2">
+                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                  Gross
+                </div>
+                <div className="text-[12px] font-semibold text-text">{top.y.toFixed(2)}%</div>
+              </div>
+              <div className="bg-page px-3 py-2">
+                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                  Expense ratio
+                </div>
+                <div className="text-[12px] font-semibold text-text">{top.er.toFixed(2)}%</div>
+              </div>
+              <div className="bg-page px-3 py-2">
+                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                  Minimum
+                </div>
+                <div className="text-[12px] font-semibold text-text">{top.mn}</div>
+              </div>
+              <div className="bg-page px-3 py-2">
+                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                  On $10M
+                </div>
+                <div className="text-[12px] font-semibold text-success-text">
+                  ≈ ${formatAnnualValue(top.a)}/yr
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
