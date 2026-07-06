@@ -505,8 +505,8 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                   />
                   <span
                     className={cx(
-                      "absolute right-[5px] top-[2px] text-[11px]",
-                      best ? "font-bold text-success-text" : "font-medium text-text",
+                      "bar-value-label absolute right-[5px] top-[2px] text-[11px] font-semibold",
+                      best ? "font-bold" : "font-medium",
                     )}
                   >
                     {r.a.toFixed(3)}%
