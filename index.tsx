@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import allClassRates from "./data/fidelity-mm-allclass.json";
 import fundMinimums from "./data/fidelity-mm-minimums.json";
+import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 
@@ -86,20 +87,13 @@ type RateSheetData = {
 type FundRule = {
   c: Category;
   njExemptPct: number;
+  sourceUrl?: string;
+  scrapedAt?: string;
 };
 
 type FundMinimum = { minimumInvestment: number; minimumLabel: string };
 
-const FUND_RULES: Record<string, FundRule> = {
-  FNSXX: { c: "p", njExemptPct: 4 }, FRGXX: { c: "g", njExemptPct: 55 }, FRBXX: { c: "t", njExemptPct: 51 }, FRSXX: { c: "t", njExemptPct: 97 },
-  FMPXX: { c: "p", njExemptPct: 4 }, FIGXX: { c: "g", njExemptPct: 55 }, FISXX: { c: "t", njExemptPct: 51 }, FSIXX: { c: "t", njExemptPct: 97 }, FTCXX: { c: "nm", njExemptPct: 0 },
-  FMYXX: { c: "p", njExemptPct: 4 }, FGEXX: { c: "g", njExemptPct: 55 }, FTUXX: { c: "t", njExemptPct: 51 }, FTYXX: { c: "t", njExemptPct: 97 }, FSXXX: { c: "nm", njExemptPct: 0 },
-  FCIXX: { c: "p", njExemptPct: 4 }, FCVXX: { c: "g", njExemptPct: 55 }, FCEXX: { c: "t", njExemptPct: 51 }, FOXXX: { c: "t", njExemptPct: 97 }, FEXXX: { c: "nm", njExemptPct: 0 },
-  FCOXX: { c: "p", njExemptPct: 4 }, FCGXX: { c: "g", njExemptPct: 55 }, FCSXX: { c: "t", njExemptPct: 51 }, FOIXX: { c: "t", njExemptPct: 97 }, FETXX: { c: "nm", njExemptPct: 0 },
-  FTVXX: { c: "t", njExemptPct: 51 }, FOPXX: { c: "t", njExemptPct: 97 }, FZDXX: { c: "p", njExemptPct: 4 }, FZCXX: { c: "g", njExemptPct: 55 }, FZEXX: { c: "nm", njExemptPct: 0 },
-  FZBXX: { c: "g", njExemptPct: 55 }, FDUXX: { c: "t", njExemptPct: 51 }, FDEXX: { c: "nm", njExemptPct: 0 }, FZAXX: { c: "g", njExemptPct: 55 }, FSRXX: { c: "t", njExemptPct: 51 }, FERXX: { c: "nm", njExemptPct: 0 },
-  FSBXX: { c: "ca", njExemptPct: 0 }, FMAXX: { c: "ma", njExemptPct: 0 }, FSKXX: { c: "nj", njExemptPct: 100 }, FNKXX: { c: "ny", njExemptPct: 0 }, FZGXX: { c: "g", njExemptPct: 55 },
-};
+const FUND_RULES = (fundTaxRules as { funds: Record<string, FundRule> }).funds;
 
 const FUND_MINIMUMS = (fundMinimums as { funds: Record<string, FundMinimum> }).funds;
 
