@@ -373,7 +373,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               type="range"
               aria-label="Federal marginal tax bracket"
               aria-valuetext={fedB[fi].l}
-              min={0}
+              min={APP_CONFIG.defaults.minimumBracketIndex}
               max={fedB.length - 1}
               value={fi}
               onInput={(e) => setFi(rangeValue(e))}
@@ -396,9 +396,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             <input
               id="nj-bracket"
               type="range"
-              aria-label="New Jersey marginal tax bracket"
+              aria-label={`${APP_CONFIG.defaults.state.toUpperCase()} marginal tax bracket`}
               aria-valuetext={stateB[ni].l}
-              min={0}
+              min={APP_CONFIG.defaults.minimumBracketIndex}
               max={stateB.length - 1}
               value={ni}
               onInput={(e) => setNi(rangeValue(e))}
