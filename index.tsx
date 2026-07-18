@@ -5,6 +5,7 @@ import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
+import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -149,9 +150,13 @@ const rateSheet = allClassRates as RateSheetData;
 const F = buildFunds(rateSheet);
 
 function at(f: Fund, fr: number, nr: number) {
-  if (isMuni(f.c) && f.se >= 100) return f.y;
-  if (isMuni(f.c)) return f.y - f.y * (1 - f.se / 100) * (nr / 100);
-  return f.y - f.y * (fr / 100) - f.y * (1 - f.se / 100) * (nr / 100);
+  return calculateAfterTaxYield({
+    grossYield: f.y,
+    federalRate: fr,
+    stateRate: nr,
+    stateExemptPct: f.se,
+    category: f.c,
+  });
 }
 
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
@@ -214,18 +219,8 @@ const categoryLegendClasses: Record<Category, string> = {
 };
 
 function barPercent(value: number, min: number, max: number) {
-  const span = max - min;
-  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) {
-    return 0;
-  }
-  if (span <= 0) {
-    return 100;
-  }
-
-  const normalized = Math.max(0, Math.min(1, (value - min) / span));
-  const curved = Math.pow(normalized, APP_CONFIG.display.bar.curve);
-  const width = APP_CONFIG.display.bar.minimumWidth + curved * APP_CONFIG.display.bar.normalizedWidth;
-  return Math.round(Math.max(0, Math.min(100, width)));
+  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return 0;
+  return Math.round(calculateBarWidth(value, min, max, APP_CONFIG.display.bar));
 }
 
 function barWidthClass(value: number) {
@@ -233,7 +228,7 @@ function barWidthClass(value: number) {
 }
 
 function formatAnnualValue(afterTaxYield: number) {
-  return ((afterTaxYield / 100) * APP_CONFIG.display.annualBalance).toLocaleString(undefined, {
+  return calculateAnnualValue(afterTaxYield, APP_CONFIG.display.annualBalance).toLocaleString(undefined, {
     maximumFractionDigits: 0,
   });
 }
