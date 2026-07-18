@@ -18,7 +18,9 @@
     "preview": "bunx --bun farm preview",
     "scrape:fidelity": "bun scripts/scrape-fidelity-mm.ts",
     "scrape:fidelity-minimums": "bun scripts/scrape-fidelity-mm-minimums.ts",
-    "scrape:fidelity-tax": "bun scripts/scrape-fidelity-mm-tax.ts"
+    "scrape:fidelity-tax": "bun scripts/scrape-fidelity-mm-tax.ts",
+    "validate:data": "bun scripts/validate-fidelity-data.ts",
+    "test": "bun test"
   },
   "type": "module",
   "dependencies": {
