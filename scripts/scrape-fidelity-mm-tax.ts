@@ -72,11 +72,10 @@ await Bun.write(outPath, JSON.stringify(output, null, 2) + "\\n");
 console.log(JSON.stringify(output, null, 2));
 
 function findGovernmentSecuritiesPdf(html: string): string {
-  const matches = html.match(/https?:[^"\\s<>]+gse[^"\\s<>]+\\.pdf/ig) ?? [];
-  if (matches.length > 0) return matches[0].startsWith("http") ? matches[0] : "https:" + matches[0];
-  const relative = html.match(/href=["']([^"']*gse[^"']*\\.pdf)["']/i)?.[1];
-  if (relative) return new URL(relative, TAX_INFORMATION_URL).toString();
-  throw new Error("Could not find Fidelity's government securities tax PDF");
+  const match = html.match(/ty(\\d{2})-gse-supplemental-letter\\.pdf/i);
+  const taxYear = match ? Number("20" + match[1]) : new Date().getUTCFullYear() - 1;
+  const yearSuffix = String(taxYear).slice(-2);
+  return "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty" + yearSuffix + "-gse-supplemental-letter.pdf";
 }
 
 async function extractPdfText(bytes: Uint8Array): Promise<string> {
