@@ -13,6 +13,9 @@ export const APP_CONFIG = {
     federalBracketIndex: 1,
     stateBracketIndex: 1,
   },
+  states: {
+    nj: { abbreviation: "NJ", name: "New Jersey" },
+  },
   display: {
     initialFundLimit: 15,
     annualBalance: 10_000_000,
