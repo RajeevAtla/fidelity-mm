@@ -1,7 +1,7 @@
 {
   "sourceUrl": "https://institutional.fidelity.com/app/funds/dailyratesheets",
   "apiUrl": "https://institutional.fidelity.com/app/funds/data/dailyratesheets.json?groupSystemName=All%20Class%20Money%20Market%20Rate%20Sheet",
-  "scrapedAt": "2026-07-18T20:17:39.083Z",
+  "scrapedAt": "2026-07-18T20:23:22.349Z",
   "tab": "allClass",
   "groupSystemName": "All Class Money Market Rate Sheet",
   "sheetTitle": "All Class Money Market Rates",
