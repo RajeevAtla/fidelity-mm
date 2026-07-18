@@ -1,6 +1,8 @@
 import "./tailwind.generated.css";
 import { render } from "preact";
 import App, { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./index";
+import { ACTIVE_TAX_YEAR } from "./tax-brackets";
+import { APP_CONFIG } from "./app-config";
 
 type ModelContextDocument = Document & {
   modelContext?: {
@@ -22,7 +24,7 @@ async function registerAgentTools() {
     description: "Read the current page's tax year, fund count, and current selection context for Fidelity money market after-tax yield comparisons.",
     inputSchema: { type: "object", properties: {} },
     execute: async () =>
-      "Active tax year: 2026. This page compares Fidelity money market fund seven-day yields using federal and New Jersey single-filer tax selections.",
+      `Active tax year: ${ACTIVE_TAX_YEAR}. This page compares Fidelity money market fund seven-day yields using federal and ${APP_CONFIG.states[APP_CONFIG.defaults.state].name} single-filer tax selections.`,
   });
 }
 
