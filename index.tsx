@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import allClassRates from "./data/fidelity-mm-allclass.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
+import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -130,24 +131,8 @@ const FUND_RULES: Record<string, FundRule> = {
   FZGXX: { c: "g", njExemptPct: 55, mn: "$0" },
 };
 
-const fedB = [
-  { r: 10, l: "10% · $0–$11.6K" },
-  { r: 12, l: "12% · $11.6K–$47.2K" },
-  { r: 22, l: "22% · $47.2K–$100.5K" },
-  { r: 24, l: "24% · $100.5K–$192K" },
-  { r: 32, l: "32% · $192K–$243.7K" },
-  { r: 35, l: "35% · $243.7K–$609.4K" },
-  { r: 37, l: "37% · $609.4K+" },
-];
-const njB = [
-  { r: 1.4, l: "1.40% · $0–$20K" },
-  { r: 1.75, l: "1.75% · $20K–$35K" },
-  { r: 3.5, l: "3.50% · $35K–$40K" },
-  { r: 5.525, l: "5.525% · $40K–$75K" },
-  { r: 6.37, l: "6.37% · $75K–$500K" },
-  { r: 8.97, l: "8.97% · $500K–$1M" },
-  { r: 10.75, l: "10.75% · $1M+" },
-];
+const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
+const njB = ACTIVE_TAX_CONFIG.nj.map(({ rate: r, label: l }) => ({ r, l }));
 
 function buildFunds(rateSheet: RateSheetData): Fund[] {
   return rateSheet.funds
@@ -385,26 +370,27 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     category === "all" ? "" : `(${F.filter((f) => f.c === category).length})`;
 
   return (
-    <div className="min-h-screen bg-page text-text font-body tabular-nums">
-      <div className="mx-auto max-w-[920px] px-[14px] py-[14px]">
+    <div role="main" aria-labelledby="page-title" className="min-h-screen bg-page text-text font-body tabular-nums">
+      <div className="mx-auto w-full max-w-[920px] px-3 py-3 sm:px-[14px] sm:py-[14px]">
         <header className="mb-2.5 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="mb-[3px] font-display text-[18px] font-bold leading-[1.18] tracking-normal">
+            <h1 id="page-title" className="mb-[3px] font-display text-[18px] font-bold leading-[1.18] tracking-normal">
               All {F.length} Fidelity Money Market Funds — After-Tax Yield
-            </h2>
+            </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               7-day yields as of {rateDate}, from the scraped Fidelity all-class money market
-              sheet. Single filer brackets (2025 tax year). For NJ residents.
+              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For NJ residents.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
             <span className="px-1 text-[11px] font-bold text-subtle">Theme</span>
-            <div className="inline-flex gap-1">
+            <div className="inline-flex gap-1" role="group" aria-label="Choose theme">
               {(["system", "light", "dark"] as ThemeMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
+                  aria-label={`${mode === "system" ? "System" : mode[0].toUpperCase() + mode.slice(1)} theme`}
                   aria-pressed={themeMode === mode}
                   data-active={themeMode === mode}
                   onClick={() => setThemeMode(mode)}
@@ -417,16 +403,19 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         </header>
 
-        <div className="mb-3 flex flex-wrap gap-5">
-          <div className="min-w-[280px] flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-semibold text-text">Federal Bracket</span>
+        <div className="mb-3 flex flex-wrap gap-4 sm:gap-5">
+          <div className="min-w-0 flex-[1_1_280px]">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="federal-bracket" className="text-[12px] font-semibold text-text">Federal Bracket</label>
               <span className="font-body text-[13px] font-bold text-federal">
-                {fedB[fi].l}
+              {fedB[fi].l}
               </span>
             </div>
             <input
+              id="federal-bracket"
               type="range"
+              aria-label="Federal marginal tax bracket"
+              aria-valuetext={fedB[fi].l}
               min={0}
               max={6}
               value={fi}
@@ -440,15 +429,18 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </div>
           </div>
 
-          <div className="min-w-[280px] flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-semibold text-text">NJ State Bracket</span>
+          <div className="min-w-0 flex-[1_1_280px]">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">NJ State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
                 {njB[ni].l}
               </span>
             </div>
             <input
+              id="nj-bracket"
               type="range"
+              aria-label="New Jersey marginal tax bracket"
+              aria-valuetext={njB[ni].l}
               min={0}
               max={6}
               value={ni}
@@ -463,7 +455,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         </div>
 
-        <div className="mb-3 flex flex-wrap gap-1">
+        <div className="mb-3 flex flex-wrap gap-1" role="group" aria-label="Fund category filter">
           {allCats.map((c) => {
             const active = fc === c;
             const tone = c === "all" ? "" : categoryButtonVariants[c];
@@ -471,6 +463,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               <button
                 key={c}
                 type="button"
+                aria-label={`${c === "all" ? "All funds" : CL[c]}${filterCount(c)}`}
                 aria-pressed={active}
                 data-active={active}
                 onClick={() => setFc(c)}
@@ -482,7 +475,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           })}
         </div>
 
-        <div className="space-y-[3px]">
+        <div id="fund-list" className="space-y-[3px]" aria-live="polite" aria-label={`${res.length} funds shown`}>
           {show.map((r, i) => {
             const best = i === 0;
             const w = barPercent(r.a, widthRange.min, widthRange.max);
@@ -490,12 +483,16 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             return (
               <div
                 key={r.t}
-                className="grid grid-cols-[52px_minmax(0,1fr)_62px_42px] items-center gap-x-1"
+                className="grid grid-cols-[52px_minmax(0,1fr)_52px_42px] items-center gap-x-1"
               >
                 <div className="w-[52px] flex-shrink-0 text-[11px] font-semibold text-text">
                   {r.t}
                 </div>
-                <div className="relative h-5 overflow-hidden rounded-md border border-track-border bg-track">
+                <div
+                  className="relative h-6 min-w-0 overflow-hidden rounded-md border border-track-border bg-track"
+                  role="img"
+                  aria-label={`${r.t} ${r.a.toFixed(3)}% after-tax yield`}
+                >
                   <div
                     className={cx(
                       "absolute inset-y-0 left-0 rounded-r-full rounded-l-none",
@@ -505,14 +502,14 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                   />
                   <span
                     className={cx(
-                      "bar-value-label absolute right-[5px] top-[2px] text-[11px] font-semibold",
+                      "bar-value-label absolute right-[4px] top-[3px] rounded bg-page/85 px-[3px] text-[11px] font-semibold leading-none",
                       best ? "font-bold" : "font-medium",
                     )}
                   >
                     {r.a.toFixed(3)}%
                   </span>
                 </div>
-                <div className="w-[62px] flex-shrink-0 pl-1 text-right text-[9px] text-muted">
+                <div className="w-[52px] flex-shrink-0 pl-1 text-right text-[9px] text-muted">
                   {CL[r.c]}
                 </div>
                 <div className="w-[42px] flex-shrink-0 pl-1 text-right text-[9px] text-subtle">
@@ -526,6 +523,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         {!showAll && res.length > 15 && (
           <button
             type="button"
+            aria-label={`Show all ${res.length} funds`}
+            aria-expanded={showAll}
+            aria-controls="fund-list"
             onClick={() => setShowAll(true)}
             className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
           >
@@ -536,6 +536,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         {showAll && res.length > 15 && (
           <button
             type="button"
+            aria-label="Show only the top 15 funds"
+            aria-expanded={showAll}
+            aria-controls="fund-list"
             onClick={() => setShowAll(false)}
             className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
           >
@@ -609,20 +612,22 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </div>
         )}
 
-        <h3 className="mb-1 mt-4 font-display text-[14px] font-bold leading-tight tracking-normal">
+        <h2 className="mb-1 mt-4 font-display text-[14px] font-bold leading-tight tracking-normal">
           Winner at Every Bracket Combination
-        </h3>
+        </h2>
 
-        <div className="overflow-x-auto rounded-md border border-table-cell-border">
-          <table className="w-full border-collapse text-[10px]">
+        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label="Winner by federal and New Jersey tax bracket">
+          <table className="min-w-[560px] w-full border-collapse text-[10px]">
+            <caption className="sr-only">Best after-tax fund for every federal and New Jersey tax bracket combination</caption>
             <thead>
               <tr>
-                <th className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
+                <th scope="col" className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
                   Fed↓ \ NJ→
                 </th>
                 {njB.map((b) => (
                   <th
                     key={b.r}
+                    scope="col"
                     className="border-b-2 border-table-header-border bg-table-header-bg px-[2px] py-[5px] text-center text-[9px] text-muted"
                   >
                     {b.r}%
@@ -633,9 +638,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             <tbody>
               {summary.map((row) => (
                 <tr key={row.fb.r}>
-                  <td className="border-b border-table-cell-border px-[3px] py-1 text-[10px] font-semibold text-text">
+                  <th scope="row" className="border-b border-table-cell-border px-[3px] py-1 text-[10px] font-semibold text-text">
                     {row.fb.r}%
-                  </td>
+                  </th>
                   {row.cols.map((w, ci) => {
                     const act = row.fb.r === fr && njB[ci].r === nr;
                     const tone = categoryCellClasses[w.c];

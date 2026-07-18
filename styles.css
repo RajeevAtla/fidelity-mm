@@ -268,9 +268,28 @@
 
   :root[data-theme="light"] .bar-value-label {
     color: #08111d;
+    background: rgb(255 255 255 / 0.88);
+    text-shadow: none;
   }
 
   :root[data-theme="dark"] .bar-value-label {
     color: #ffffff;
+    background: rgb(0 0 0 / 0.78);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--selection-border);
+    outline-offset: 2px;
+  }
+
+  /* Keep the compact visual system readable to Lighthouse and low-vision users. */
+  .text-\\[9px\\] {
+    font-size: 12px;
+  }
+
+  @media (max-width: 380px) {
+    .bar-value-label {
+      font-size: 10px;
+    }
   }
 }

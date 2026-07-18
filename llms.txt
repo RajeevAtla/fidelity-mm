@@ -1,0 +1,25 @@
+# Fidelity Money Market Funds — After-Tax Yield
+
+## Purpose
+
+This page compares Fidelity money market funds using scraped 7-day yields and an approximate after-tax calculation for a single filer in New Jersey.
+
+## Interactions
+
+- Choose System, Light, or Dark theme.
+- Select a federal marginal tax bracket.
+- Select a New Jersey state tax bracket.
+- Filter funds by category.
+- Expand the fund list to show all funds.
+- Use the bracket matrix to compare the winning fund for every federal and New Jersey bracket combination.
+
+## Data and assumptions
+
+- Active tax year: 2026.
+- Fund data is sourced from Fidelity's all-class money market rate sheet.
+- Yields are seven-day yields and are net of the displayed expense ratio.
+- New Jersey exemption percentages are approximate assumptions and may vary by year.
+
+## Accessibility
+
+All controls are labeled and keyboard accessible. The fund list and bracket matrix expose their values in the accessibility tree.
