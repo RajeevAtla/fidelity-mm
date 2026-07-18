@@ -288,6 +288,6 @@ Do not overwrite the minimum data file with empty or partial results.
 
 ## License and data notice
 
-No separate license file is currently included in the repository. Confirm the intended licensing terms before redistributing the source or republishing the data.
+The source code is released under the [MIT License](LICENSE). Fidelity names, fund names, symbols, yields, and related fund information belong to their respective owners. The project links to Fidelity's public research pages for reference. Always confirm current fund details and eligibility requirements with Fidelity before making a decision.
 
 Fidelity names, fund names, symbols, yields, and related fund information belong to their respective owners. The project links to Fidelity's public research pages for reference. Always confirm current fund details and eligibility requirements with Fidelity before making a decision.
