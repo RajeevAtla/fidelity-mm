@@ -126,6 +126,7 @@ function buildFunds(rateSheet: RateSheetData): Fund[] {
 }
 
 const CL = APP_CONFIG.categories.labels;
+const isMuni = (category: Category) => APP_CONFIG.categories.municipal.includes(category);
 
 function displayName(fund: RateSheetFund) {
   const sectionParts = (fund.section ?? "").split(":");
