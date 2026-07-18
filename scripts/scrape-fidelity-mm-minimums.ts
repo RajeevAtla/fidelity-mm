@@ -84,6 +84,8 @@ console.log(json);
 function parseMinimum(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return null;
   const text = String(value).replace(/\s+/g, " ");
+  const directAmount = Number(text.replace(/[$,%]/g, "").replace(/,/g, "").trim());
+  if (Number.isFinite(directAmount)) return directAmount;
   const patterns = [
     /minimum\s+(?:initial\s+)?investment\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
     /minimum\s+(?:initial\s+)?purchase\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
