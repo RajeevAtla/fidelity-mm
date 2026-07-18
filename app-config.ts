@@ -9,6 +9,7 @@ export const APP_CONFIG = {
   },
   defaults: {
     state: "nj" as const,
+    minimumBracketIndex: 0,
     federalBracketIndex: 1,
     stateBracketIndex: 1,
   },
