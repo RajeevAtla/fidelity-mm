@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import allClassRates from "./data/fidelity-mm-allclass.json";
+import fundMinimums from "./data/fidelity-mm-minimums.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 
@@ -85,51 +86,22 @@ type RateSheetData = {
 type FundRule = {
   c: Category;
   njExemptPct: number;
-  mn: string;
 };
 
+type FundMinimum = { minimumInvestment: number; minimumLabel: string };
+
 const FUND_RULES: Record<string, FundRule> = {
-  FNSXX: { c: "p", njExemptPct: 4, mn: "$10M" },
-  FRGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
-  FRBXX: { c: "t", njExemptPct: 51, mn: "$10M" },
-  FRSXX: { c: "t", njExemptPct: 97, mn: "$10M" },
-  FMPXX: { c: "p", njExemptPct: 4, mn: "$10M" },
-  FIGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
-  FISXX: { c: "t", njExemptPct: 51, mn: "$10M" },
-  FSIXX: { c: "t", njExemptPct: 97, mn: "$10M" },
-  FTCXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
-  FMYXX: { c: "p", njExemptPct: 4, mn: "$0" },
-  FGEXX: { c: "g", njExemptPct: 55, mn: "$0" },
-  FTUXX: { c: "t", njExemptPct: 51, mn: "$0" },
-  FTYXX: { c: "t", njExemptPct: 97, mn: "$0" },
-  FSXXX: { c: "nm", njExemptPct: 0, mn: "$0" },
-  FCIXX: { c: "p", njExemptPct: 4, mn: "$10M" },
-  FCVXX: { c: "g", njExemptPct: 55, mn: "$10M" },
-  FCEXX: { c: "t", njExemptPct: 51, mn: "$10M" },
-  FOXXX: { c: "t", njExemptPct: 97, mn: "$10M" },
-  FEXXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
-  FCOXX: { c: "p", njExemptPct: 4, mn: "$10M" },
-  FCGXX: { c: "g", njExemptPct: 55, mn: "$10M" },
-  FCSXX: { c: "t", njExemptPct: 51, mn: "$10M" },
-  FOIXX: { c: "t", njExemptPct: 97, mn: "$10M" },
-  FETXX: { c: "nm", njExemptPct: 0, mn: "$10M" },
-  FTVXX: { c: "t", njExemptPct: 51, mn: "$10M" },
-  FOPXX: { c: "t", njExemptPct: 97, mn: "$10M" },
-  FZDXX: { c: "p", njExemptPct: 4, mn: "$100K" },
-  FZCXX: { c: "g", njExemptPct: 55, mn: "$100K" },
-  FZEXX: { c: "nm", njExemptPct: 0, mn: "$100K" },
-  FZBXX: { c: "g", njExemptPct: 55, mn: "$0" },
-  FDUXX: { c: "t", njExemptPct: 51, mn: "$0" },
-  FDEXX: { c: "nm", njExemptPct: 0, mn: "$0" },
-  FZAXX: { c: "g", njExemptPct: 55, mn: "$0" },
-  FSRXX: { c: "t", njExemptPct: 51, mn: "$0" },
-  FERXX: { c: "nm", njExemptPct: 0, mn: "$0" },
-  FSBXX: { c: "ca", njExemptPct: 0, mn: "$1M" },
-  FMAXX: { c: "ma", njExemptPct: 0, mn: "$1M" },
-  FSKXX: { c: "nj", njExemptPct: 100, mn: "$1M" },
-  FNKXX: { c: "ny", njExemptPct: 0, mn: "$1M" },
-  FZGXX: { c: "g", njExemptPct: 55, mn: "$0" },
+  FNSXX: { c: "p", njExemptPct: 4 }, FRGXX: { c: "g", njExemptPct: 55 }, FRBXX: { c: "t", njExemptPct: 51 }, FRSXX: { c: "t", njExemptPct: 97 },
+  FMPXX: { c: "p", njExemptPct: 4 }, FIGXX: { c: "g", njExemptPct: 55 }, FISXX: { c: "t", njExemptPct: 51 }, FSIXX: { c: "t", njExemptPct: 97 }, FTCXX: { c: "nm", njExemptPct: 0 },
+  FMYXX: { c: "p", njExemptPct: 4 }, FGEXX: { c: "g", njExemptPct: 55 }, FTUXX: { c: "t", njExemptPct: 51 }, FTYXX: { c: "t", njExemptPct: 97 }, FSXXX: { c: "nm", njExemptPct: 0 },
+  FCIXX: { c: "p", njExemptPct: 4 }, FCVXX: { c: "g", njExemptPct: 55 }, FCEXX: { c: "t", njExemptPct: 51 }, FOXXX: { c: "t", njExemptPct: 97 }, FEXXX: { c: "nm", njExemptPct: 0 },
+  FCOXX: { c: "p", njExemptPct: 4 }, FCGXX: { c: "g", njExemptPct: 55 }, FCSXX: { c: "t", njExemptPct: 51 }, FOIXX: { c: "t", njExemptPct: 97 }, FETXX: { c: "nm", njExemptPct: 0 },
+  FTVXX: { c: "t", njExemptPct: 51 }, FOPXX: { c: "t", njExemptPct: 97 }, FZDXX: { c: "p", njExemptPct: 4 }, FZCXX: { c: "g", njExemptPct: 55 }, FZEXX: { c: "nm", njExemptPct: 0 },
+  FZBXX: { c: "g", njExemptPct: 55 }, FDUXX: { c: "t", njExemptPct: 51 }, FDEXX: { c: "nm", njExemptPct: 0 }, FZAXX: { c: "g", njExemptPct: 55 }, FSRXX: { c: "t", njExemptPct: 51 }, FERXX: { c: "nm", njExemptPct: 0 },
+  FSBXX: { c: "ca", njExemptPct: 0 }, FMAXX: { c: "ma", njExemptPct: 0 }, FSKXX: { c: "nj", njExemptPct: 100 }, FNKXX: { c: "ny", njExemptPct: 0 }, FZGXX: { c: "g", njExemptPct: 55 },
 };
+
+const FUND_MINIMUMS = (fundMinimums as { funds: Record<string, FundMinimum> }).funds;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const njB = ACTIVE_TAX_CONFIG.nj.map(({ rate: r, label: l }) => ({ r, l }));
@@ -139,8 +111,12 @@ function buildFunds(rateSheet: RateSheetData): Fund[] {
     .filter((fund) => fund.symbol && fund.sevenDayYield !== null)
     .map((fund) => {
       const rule = FUND_RULES[fund.symbol ?? ""];
+      const minimum = FUND_MINIMUMS[fund.symbol ?? ""];
       if (!rule) {
         throw new Error(`Missing fund rule for ${fund.symbol ?? "unknown symbol"}`);
+      }
+      if (!minimum) {
+        throw new Error(`Missing minimum investment for ${fund.symbol ?? "unknown symbol"}`);
       }
 
       return {
@@ -150,7 +126,7 @@ function buildFunds(rateSheet: RateSheetData): Fund[] {
         er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
         c: rule.c,
         se: rule.njExemptPct,
-        mn: rule.mn,
+        mn: minimum.minimumLabel,
       };
     });
 }

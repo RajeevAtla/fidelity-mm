@@ -34,6 +34,7 @@ jobs:
       - name: Refresh data files
         run: |
           bun run scrape:fidelity -- --tab allClass --out data/fidelity-mm-allclass.json
+          bun run scrape:fidelity-minimums -- --out data/fidelity-mm-minimums.json
 
       - name: Commit updates
         run: |
