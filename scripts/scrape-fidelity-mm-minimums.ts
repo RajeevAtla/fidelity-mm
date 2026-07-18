@@ -100,14 +100,13 @@ function parseMinimum(html: string): number | null {
 }
 
 function findCusip(symbol: string, catalogText: string): string | null {
-  const symbolPattern = new RegExp("\\b" + symbol + "\\b", "i");
-  const symbolMatch = symbolPattern.exec(catalogText);
-  if (!symbolMatch) return null;
-  const nearby = catalogText.slice(Math.max(0, symbolMatch.index - 180), symbolMatch.index + 220);
-  const cusip = nearby.match(/\b[0-9A-Z]{9}\b/gi)?.find((value) => value.toUpperCase() !== symbol);
-  return cusip?.toUpperCase() ?? null;
-}
+  const escapedSymbol = symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const afterSymbol = catalogText.match(new RegExp("\\b" + escapedSymbol + "\\b\\s+CUSIP\\s+([0-9A-Z]{9})", "i"));
+  if (afterSymbol) return afterSymbol[1].toUpperCase();
 
+  const beforeSymbol = catalogText.match(new RegExp("CUSIP\\s+([0-9A-Z]{9})\\s+(?:Fund #\\s+\\d+\\s+)?(?:Symbol\\s+)?"+escapedSymbol+"\\b", "i"));
+  return beforeSymbol?.[1]?.toUpperCase() ?? null;
+}
 function formatMinimum(amount: number): string {
   if (amount === 0) return "$0";
   if (amount >= 1_000_000 && amount % 1_000_000 === 0) return `$${amount / 1_000_000}M`;
