@@ -53,4 +53,5 @@ jobs:
           git add data/
           DATETIME_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           git commit -m "✨ Refresh Fidelity data ($DATETIME_UTC)"
+          git pull --rebase origin main
           git push
