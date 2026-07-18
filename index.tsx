@@ -97,6 +97,8 @@ const FUND_MINIMUMS = (fundMinimums as { funds: Record<string, FundMinimum> }).f
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
+const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
+const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
 
 function buildFunds(rateSheet: RateSheetData): Fund[] {
   return rateSheet.funds
@@ -247,8 +249,8 @@ function buttonClasses(active: boolean, tone?: string) {
 export default function App(props: { initialThemeMode: ThemeMode }) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => resolveThemeMode("system"));
-  const [fi, setFi] = useState(APP_CONFIG.defaults.federalBracketIndex);
-  const [ni, setNi] = useState(APP_CONFIG.defaults.stateBracketIndex);
+  const [fi, setFi] = useState(initialFederalBracketIndex);
+  const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
 
