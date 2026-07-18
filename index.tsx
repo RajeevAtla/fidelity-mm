@@ -387,7 +387,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
           <div className="min-w-0 flex-[1_1_280px]">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">{CURRENT_STATE.abbreviation} State Bracket</label>
+              <label htmlFor="state-bracket" className="text-[12px] font-semibold text-text">{CURRENT_STATE.abbreviation} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
                 {stateB[ni].l}
               </span>
