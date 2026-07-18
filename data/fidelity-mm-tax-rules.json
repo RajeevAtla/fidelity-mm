@@ -1,248 +1,248 @@
 {
   "sourceUrl": "https://www.fidelity.com/tax-information/fidelity-mutual-fund-tax-information",
   "taxYear": 2025,
-  "scrapedAt": "2026-07-18T20:59:58.775Z",
+  "scrapedAt": "2026-07-18T21:08:27.770Z",
   "count": 40,
   "funds": {
     "FNSXX": {
       "c": "p",
       "njExemptPct": 16.17,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FRGXX": {
       "c": "g",
       "njExemptPct": 50.11,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FRBXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FRSXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FMPXX": {
       "c": "p",
       "njExemptPct": 16.17,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FIGXX": {
       "c": "g",
       "njExemptPct": 50.11,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FISXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FSIXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FTCXX": {
       "c": "nm",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FMYXX": {
       "c": "p",
       "njExemptPct": 16.17,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FGEXX": {
       "c": "g",
       "njExemptPct": 50.11,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FTUXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FTYXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FSXXX": {
       "c": "nm",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCIXX": {
       "c": "p",
       "njExemptPct": 16.17,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCVXX": {
       "c": "g",
       "njExemptPct": 50.11,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCEXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FOXXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FEXXX": {
       "c": "nm",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCOXX": {
       "c": "p",
       "njExemptPct": 16.17,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCGXX": {
       "c": "g",
       "njExemptPct": 50.11,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FCSXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FOIXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FETXX": {
       "c": "nm",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FTVXX": {
       "c": "t",
       "njExemptPct": 60.53,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FOPXX": {
       "c": "t",
       "njExemptPct": 99.59,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZDXX": {
       "c": "p",
       "njExemptPct": 14.56,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZCXX": {
       "c": "g",
       "njExemptPct": 50.9,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZEXX": {
       "c": "p",
       "njExemptPct": 14.56,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZBXX": {
       "c": "g",
       "njExemptPct": 50.9,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FDUXX": {
       "c": "t",
       "njExemptPct": 61.52,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FDEXX": {
       "c": "p",
       "njExemptPct": 14.56,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZAXX": {
       "c": "g",
       "njExemptPct": 50.9,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FSRXX": {
       "c": "t",
       "njExemptPct": 61.52,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FERXX": {
       "c": "p",
       "njExemptPct": 14.56,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FSBXX": {
       "c": "ca",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FMAXX": {
       "c": "ma",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FSKXX": {
       "c": "nj",
       "njExemptPct": 100,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FNKXX": {
       "c": "ny",
       "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     },
     "FZGXX": {
       "c": "g",
       "njExemptPct": 50.9,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
-      "scrapedAt": "2026-07-18T20:59:58.775Z"
+      "scrapedAt": "2026-07-18T21:08:27.770Z"
     }
   }
 }
