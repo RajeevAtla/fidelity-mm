@@ -1,247 +1,247 @@
 {
   "source": "https://institutional.fidelity.com/app/funds-and-products/list/FIIS_PP_SP28_DPL3/fidelity-money-market-funds.html",
-  "scrapedAt": "2026-07-18T21:08:13.254Z",
+  "scrapedAt": "2026-07-18T21:12:57.219Z",
   "count": 40,
   "funds": {
     "FNSXX": {
       "minimumInvestment": 9999999.99,
       "minimumLabel": "$9,999,999.99",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A109",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FRGXX": {
       "minimumInvestment": 9999999.99,
       "minimumLabel": "$9,999,999.99",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A703",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FRBXX": {
       "minimumInvestment": 9999999.99,
       "minimumLabel": "$9,999,999.99",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A885",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FRSXX": {
       "minimumInvestment": 9999999.99,
       "minimumLabel": "$9,999,999.99",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A802",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FMPXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175207",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FIGXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175108",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FISXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175504",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FSIXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/233809300",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FTCXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316176106",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FMYXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/192826501",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FGEXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/192826303",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FTUXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/192826204",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FTYXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/192826105",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FSXXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/192826600",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCIXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175843",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCVXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175850",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCEXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175835",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FOXXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/233809805",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FEXXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316176205",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCOXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175702",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCGXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175603",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FCSXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316175884",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FOIXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/233809888",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FETXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316176304",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FTVXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A406",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FOPXX": {
       "minimumInvestment": 10000000,
       "minimumLabel": "$10M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31607A505",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZDXX": {
       "minimumInvestment": 100000,
       "minimumLabel": "$100K",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31617H805",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZCXX": {
       "minimumInvestment": 100000,
       "minimumLabel": "$100K",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31617H706",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZEXX": {
       "minimumInvestment": 25000,
       "minimumLabel": "$25K",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316341403",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZBXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31617H607",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FDUXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/233809201",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FDEXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/233816107",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZAXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31617H508",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FSRXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/650914104",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FERXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/650914302",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FSBXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31606Y108",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FMAXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/315902403",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FSKXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316090406",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FNKXX": {
       "minimumInvestment": 1000000,
       "minimumLabel": "$1M",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/316338102",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     },
     "FZGXX": {
       "minimumInvestment": 0,
       "minimumLabel": "$0",
       "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/31617H870",
-      "scrapedAt": "2026-07-18T21:08:13.254Z"
+      "scrapedAt": "2026-07-18T21:12:57.219Z"
     }
   }
 }
