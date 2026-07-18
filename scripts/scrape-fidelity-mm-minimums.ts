@@ -1,7 +1,9 @@
-const FUND_RESEARCH_URL = "https://fundresearch.fidelity.com/mutual-funds/summary";
-const FUND_CATALOG_URL = "https://institutional.fidelity.com/app/funds-and-products/list/FIIS_PP_SP28_DPL3/fidelity-money-market-funds.html";
-const FUND_SUMMARY_API = "https://fundresearch.fidelity.com/mutual-funds/api/v1/investments";
-const RATE_SHEET_PATH = "data/fidelity-mm-allclass.json";
+import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+
+const FUND_RESEARCH_URL = FIDELITY_SOURCES.fundResearch;
+const FUND_CATALOG_URL = FIDELITY_SOURCES.fundCatalog;
+const FUND_SUMMARY_API = FIDELITY_SOURCES.fundSummaryApi;
+const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
 
 type RateSheet = { funds?: Array<{ symbol?: string | null }> };
 type MinimumRule = {
@@ -12,7 +14,7 @@ type MinimumRule = {
 };
 
 const outIndex = process.argv.indexOf("--out");
-const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : "data/fidelity-mm-minimums.json";
+const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : DATA_PATHS.minimums;
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log("Usage: bun scripts/scrape-fidelity-mm-minimums.ts [--out path]");
@@ -27,7 +29,7 @@ if (symbols.length === 0) throw new Error(`No fund symbols found in ${RATE_SHEET
 const catalogResponse = await fetch(FUND_CATALOG_URL, {
   headers: {
     accept: "text/html,application/xhtml+xml",
-    "user-agent": "fidelity-mm/1.0 (+https://github.com/RajeevAtla/fidelity-mm; personal research scraper)",
+    "user-agent": SCRAPER_USER_AGENT,
   },
 });
 if (!catalogResponse.ok) {
@@ -52,7 +54,7 @@ for (const symbol of symbols) {
     headers: {
       accept: "application/json",
       referer: sourceUrl,
-      "user-agent": "fidelity-mm/1.0 (+https://github.com/RajeevAtla/fidelity-mm; personal research scraper)",
+      "user-agent": SCRAPER_USER_AGENT,
     },
   });
 
@@ -94,7 +96,7 @@ console.log(json);
 
 async function readExistingMinimums(): Promise<Record<string, MinimumRule>> {
   try {
-    const data = JSON.parse(await Bun.file("data/fidelity-mm-minimums.json").text()) as {
+    const data = JSON.parse(await Bun.file(DATA_PATHS.minimums).text()) as {
       funds?: Record<string, MinimumRule>;
     };
     return data.funds ?? {};
