@@ -28,6 +28,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install PDF tooling
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
       - name: Install dependencies
         run: bun install
 
