@@ -13,6 +13,7 @@ export type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
+const CURRENT_STATE = APP_CONFIG.states[APP_CONFIG.defaults.state];
 
 export function getStoredThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
@@ -334,7 +335,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               7-day yields as of {rateDate}, from the scraped Fidelity all-class money market
-              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For {APP_CONFIG.defaults.state.toUpperCase()} residents.
+              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For {CURRENT_STATE.abbreviation} residents.
             </p>
           </div>
 
@@ -386,15 +387,15 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
           <div className="min-w-0 flex-[1_1_280px]">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">{APP_CONFIG.defaults.state.toUpperCase()} State Bracket</label>
+              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">{CURRENT_STATE.abbreviation} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
                 {stateB[ni].l}
               </span>
             </div>
             <input
-              id="nj-bracket"
+              id="state-bracket"
               type="range"
-              aria-label={`${APP_CONFIG.defaults.state.toUpperCase()} marginal tax bracket`}
+              aria-label={`${CURRENT_STATE.abbreviation} marginal tax bracket`}
               aria-valuetext={stateB[ni].l}
               min={APP_CONFIG.defaults.minimumBracketIndex}
               max={stateB.length - 1}
@@ -571,9 +572,9 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           Winner at Every Bracket Combination
         </h2>
 
-        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label="Winner by federal and New Jersey tax bracket">
+        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label="Winner by federal and state tax bracket">
           <table className="min-w-[560px] w-full border-collapse text-[10px]">
-            <caption className="sr-only">Best after-tax fund for every federal and New Jersey tax bracket combination</caption>
+            <caption className="sr-only">Best after-tax fund for every federal and state tax bracket combination</caption>
             <thead>
               <tr>
                 <th scope="col" className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
