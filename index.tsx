@@ -96,7 +96,7 @@ const FUND_RULES = (fundTaxRules as { funds: Record<string, FundRule> }).funds;
 const FUND_MINIMUMS = (fundMinimums as { funds: Record<string, FundMinimum> }).funds;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
-const njB = ACTIVE_TAX_CONFIG.nj.map(({ rate: r, label: l }) => ({ r, l }));
+const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
 
 function buildFunds(rateSheet: RateSheetData): Fund[] {
   return rateSheet.funds
@@ -255,7 +255,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const rateDate = rateSheet.requestedPriceDate ?? "latest scrape";
   const fr = fedB[fi].r;
-  const nr = njB[ni].r;
+  const nr = stateB[ni].r;
 
   useEffect(() => {
     try {
@@ -314,7 +314,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const summary = useMemo(() => {
     return fedB.map((fb) => ({
       fb,
-      cols: njB.map((nb) => {
+      cols: stateB.map((nb) => {
         const best = F.map((f) => ({ t: f.t, a: at(f, fb.r, nb.r), c: f.c })).sort(
           (a, b) => b.a - a.a,
         )[0];
@@ -390,22 +390,22 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             <div className="flex items-center justify-between gap-2">
               <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">{APP_CONFIG.defaults.state.toUpperCase()} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
-                {njB[ni].l}
+                {stateB[ni].l}
               </span>
             </div>
             <input
               id="nj-bracket"
               type="range"
               aria-label="New Jersey marginal tax bracket"
-              aria-valuetext={njB[ni].l}
+              aria-valuetext={stateB[ni].l}
               min={0}
-              max={njB.length - 1}
+              max={stateB.length - 1}
               value={ni}
               onInput={(e) => setNi(rangeValue(e))}
               className="w-full accent-state"
             />
             <div className="flex justify-between text-[9px] text-subtle">
-              {njB.map((b) => (
+              {stateB.map((b) => (
                 <span key={b.r}>{b.r}%</span>
               ))}
             </div>
@@ -581,7 +581,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                 <th scope="col" className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
                   Fed↓ \ NJ→
                 </th>
-                {njB.map((b) => (
+                {stateB.map((b) => (
                   <th
                     key={b.r}
                     scope="col"
@@ -599,7 +599,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
                     {row.fb.r}%
                   </th>
                   {row.cols.map((w, ci) => {
-                    const act = row.fb.r === fr && njB[ci].r === nr;
+                    const act = row.fb.r === fr && stateB[ci].r === nr;
                     const tone = categoryCellClasses[w.c];
                     return (
                       <td
