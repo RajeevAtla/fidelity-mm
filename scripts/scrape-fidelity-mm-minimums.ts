@@ -20,6 +20,7 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
 }
 
 const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheet;
+const existingMinimums = await readExistingMinimums();
 const symbols = [...new Set((rateSheet.funds ?? []).map((fund) => fund.symbol).filter(Boolean))] as string[];
 if (symbols.length === 0) throw new Error(`No fund symbols found in ${RATE_SHEET_PATH}`);
 
@@ -56,7 +57,17 @@ for (const symbol of symbols) {
   });
 
   if (!response.ok) {
-    failures.push(`${symbol}: Fidelity returned ${response.status} for ${apiUrl}`);
+    const existing = existingMinimums[symbol];
+    if (existing) {
+      console.warn(symbol + ": Fidelity API returned " + response.status + "; preserving checked-in minimum " + existing.minimumLabel);
+      entries[symbol] = {
+        ...existing,
+        sourceUrl,
+        scrapedAt,
+      };
+      continue;
+    }
+    failures.push(`${symbol}: Fidelity returned ${response.status} for ${apiUrl} and no checked-in fallback exists`);
     continue;
   }
 
@@ -80,6 +91,17 @@ if (failures.length > 0) {
 const json = `${JSON.stringify({ source: FUND_CATALOG_URL, scrapedAt, count: Object.keys(entries).length, funds: entries }, null, 2)}\n`;
 await Bun.write(outPath, json);
 console.log(json);
+
+async function readExistingMinimums(): Promise<Record<string, MinimumRule>> {
+  try {
+    const data = JSON.parse(await Bun.file("data/fidelity-mm-minimums.json").text()) as {
+      funds?: Record<string, MinimumRule>;
+    };
+    return data.funds ?? {};
+  } catch {
+    return {};
+  }
+}
 
 function parseMinimum(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return null;
