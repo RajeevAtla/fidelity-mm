@@ -1,4 +1,5 @@
 import { defineConfig } from "@farmfe/core";
+import { APP_CONFIG } from "./app-config";
 
 export default defineConfig({
   compilation: {
@@ -7,7 +8,7 @@ export default defineConfig({
     },
     output: {
       path: "./dist",
-      publicPath: "/fidelity-mm/",
+      publicPath: APP_CONFIG.site.basePath,
       targetEnv: "browser-esnext",
     },
     sourcemap: false,
