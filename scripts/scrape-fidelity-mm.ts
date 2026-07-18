@@ -1,5 +1,7 @@
-const PAGE_URL = "https://institutional.fidelity.com/app/funds/dailyratesheets";
-const DATA_URL = "https://institutional.fidelity.com/app/funds/data/dailyratesheets.json";
+import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+
+const PAGE_URL = FIDELITY_SOURCES.rateSheetPage;
+const DATA_URL = FIDELITY_SOURCES.rateSheetApi;
 
 const TAB_TO_GROUP = {
   allClass: "All Class Money Market Rate Sheet",
@@ -87,7 +89,7 @@ const response = await fetch(apiUrl, {
     accept: "application/json,text/plain,*/*",
     referer: PAGE_URL,
     "user-agent":
-      "fidelity-mm/1.0 (+https://github.com/local/fidelity-mm; personal research scraper)",
+      SCRAPER_USER_AGENT,
   },
 });
 
