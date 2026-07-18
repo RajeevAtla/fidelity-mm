@@ -3,8 +3,6 @@ name: Refresh Fidelity Data
 on:
   schedule:
     - cron: "0 0 * * 1-5"
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
           fetch-depth: 0
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@main
         with:
           bun-version: latest
 
@@ -39,6 +37,9 @@ jobs:
           bun run scrape:fidelity -- --tab allClass --out data/fidelity-mm-allclass.json
           bun run scrape:fidelity-minimums -- --out data/fidelity-mm-minimums.json
           bun run scrape:fidelity-tax -- --out data/fidelity-mm-tax-rules.json
+
+      - name: Validate generated data
+        run: bun run validate:data
 
       - name: Commit updates
         run: |
