@@ -1,4 +1,5 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import { fetchWithRetry } from "../fetch-utils";
 
 const TAX_INFORMATION_URL = FIDELITY_SOURCES.taxInformationPage;
 const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
@@ -25,14 +26,14 @@ const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateShee
 const funds = (rateSheet.funds ?? []).filter((fund) => fund.symbol);
 if (funds.length === 0) throw new Error("No fund symbols found in " + RATE_SHEET_PATH);
 
-const pageResponse = await fetch(TAX_INFORMATION_URL, {
+const pageResponse = await fetchWithRetry(TAX_INFORMATION_URL, {
   headers: { accept: "text/html,application/xhtml+xml", "user-agent": SCRAPER_USER_AGENT },
 });
 if (!pageResponse.ok) throw new Error("Fidelity tax page returned " + pageResponse.status + " " + pageResponse.statusText);
 
 const pageHtml = await pageResponse.text();
 const pdfUrl = findGovernmentSecuritiesPdf(pageHtml);
-const pdfResponse = await fetch(pdfUrl, {
+const pdfResponse = await fetchWithRetry(pdfUrl, {
   headers: { accept: "application/pdf", referer: TAX_INFORMATION_URL, "user-agent": SCRAPER_USER_AGENT },
 });
 if (!pdfResponse.ok) throw new Error("Fidelity tax PDF returned " + pdfResponse.status + " " + pdfResponse.statusText);
