@@ -72,7 +72,7 @@ await Bun.write(outPath, JSON.stringify(output, null, 2) + "\\n");
 console.log(JSON.stringify(output, null, 2));
 
 function findGovernmentSecuritiesPdf(html: string): string {
-  const matches = html.match(/(?:https?:)?\\/\\/[^"'\\s<>]+gse[^"'\\s<>]+\\.pdf/ig) ?? [];
+  const matches = html.match(/https?:[^"\\s<>]+gse[^"\\s<>]+\\.pdf/ig) ?? [];
   if (matches.length > 0) return matches[0].startsWith("http") ? matches[0] : "https:" + matches[0];
   const relative = html.match(/href=["']([^"']*gse[^"']*\\.pdf)["']/i)?.[1];
   if (relative) return new URL(relative, TAX_INFORMATION_URL).toString();
