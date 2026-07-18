@@ -39,8 +39,10 @@ The figures shown in the application are informational comparisons. They are not
 | `tax-brackets.ts` | Federal tax bracket data and tax-year configuration. |
 | `data/fidelity-mm-allclass.json` | Yield and fund-class data used by the application. |
 | `data/fidelity-mm-minimums.json` | Minimum investment values, source links, and scrape timestamps. |
+| `data/fidelity-mm-tax-rules.json` | Tax-year-specific fund categories and state-exempt percentages. |
 | `scripts/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
 | `scripts/scrape-fidelity-mm-minimums.ts` | Resolves fund symbols to CUSIPs and refreshes minimum investment data. |
+| `scripts/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
 | `farm.config.ts` | Farm build configuration, including the deployment base path. |
 | `.github/workflows/data.yml` | Scheduled and manual data-refresh workflow. |
 | `.github/workflows/deploy.yml` | GitHub Pages build and deployment workflow. |
@@ -101,6 +103,7 @@ The build output is written to `dist/`. It is safe to remove and regenerate this
 | `bun run preview` | Serves the production build for local inspection. |
 | `bun run scrape:fidelity` | Refreshes the yield and fund-class data file. |
 | `bun run scrape:fidelity-minimums` | Refreshes the minimum investment data file. |
+| `bun run scrape:fidelity-tax` | Refreshes tax categories and state-exempt percentages from Fidelity's annual tax letter. |
 
 ## Data files
 
@@ -161,7 +164,7 @@ The `.github/workflows/data.yml` workflow runs:
 - On every push to `main`.
 - When started manually from the Actions tab.
 
-The workflow installs Bun dependencies, runs both refresh scripts, and commits changes under `data/` when the generated files differ from the checked-in versions.
+The workflow installs PDF text-extraction tooling and Bun dependencies, runs the yield, minimum, and tax refresh scripts, and commits changes under `data/` when the generated files differ from the checked-in versions.
 
 To perform a manual refresh:
 
@@ -187,6 +190,19 @@ When updating tax rules:
 
 Tax calculations are estimates based on the selected federal brackets. State and local taxes, deductions, credits, account type, and individual circumstances are outside the scope of the comparison.
 
+## Tax-exemption data
+
+The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a category and New Jersey state-exempt percentage.
+
+Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, refresh timestamp, category, and percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
+
+The tax letter is a PDF. The automated workflow installs `poppler-utils` and uses `pdftotext` to extract its table. To run this locally, install Poppler or another distribution that provides the `pdftotext` command before running:
+
+`@sh
+bun run scrape:fidelity-tax -- --out data/fidelity-mm-tax-rules.json
+`@
+
+Do not replace a missing annual letter with an estimate. If Fidelity changes the document URL or table labels, update the scraper's source matching and verify the generated values against the published PDF.
 ## GitHub Pages deployment
 
 The `.github/workflows/deploy.yml` workflow builds the application and publishes `dist/` to GitHub Pages whenever `main` changes. It can also be started manually.
