@@ -35,6 +35,7 @@ jobs:
         run: |
           bun run scrape:fidelity -- --tab allClass --out data/fidelity-mm-allclass.json
           bun run scrape:fidelity-minimums -- --out data/fidelity-mm-minimums.json
+          bun run scrape:fidelity-tax -- --out data/fidelity-mm-tax-rules.json
 
       - name: Commit updates
         run: |
