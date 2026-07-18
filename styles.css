@@ -4,8 +4,8 @@
 @source "./bar-widths.ts";
 
 @theme {
-  --font-body: "Soft Grotesk", "Soft Grotesk L", system-ui, sans-serif;
-  --font-display: "Tripsis", "Tripsis L", Georgia, serif;
+  --font-body: system-ui, sans-serif;
+  --font-display: Georgia, serif;
 
   --color-page: var(--page-bg);
   --color-page-alt: var(--page-bg-alt);
@@ -73,49 +73,6 @@
 }
 
 @layer base {
-  @font-face {
-    font-family: "Soft Grotesk";
-    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Regular.otf") format("opentype");
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Soft Grotesk";
-    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Medium.otf") format("opentype");
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Soft Grotesk";
-    src: url("/fidelity-mm/fonts/SoftGrotesk/SoftGroteskTestL-Bold.otf") format("opentype");
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Tripsis";
-    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Regular.otf") format("opentype");
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Tripsis";
-    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Medium.otf") format("opentype");
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Tripsis";
-    src: url("/fidelity-mm/fonts/Test-Tripsis/TripsisTest-Bold.otf") format("opentype");
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-  }
-
   :root[data-theme="light"] {
     color-scheme: light;
     --page-bg: #f5f8fc;
