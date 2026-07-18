@@ -1,5 +1,5 @@
 import "./tailwind.generated.css";
-import { render } from "preact";
+import { Component, type ComponentChildren, render } from "preact";
 import App, { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./index";
 import { ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
@@ -14,6 +14,26 @@ type ModelContextDocument = Document & {
     }) => Promise<unknown>;
   };
 };
+
+class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  componentDidCatch(error: Error) {
+    this.setState({ error });
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main role="main" style="padding: 2rem; font-family: system-ui, sans-serif;">
+          <h1>Fidelity data is temporarily unavailable</h1>
+          <p>The page could not load its generated fund data. Please refresh later.</p>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 async function registerAgentTools() {
   const modelContext = (document as ModelContextDocument).modelContext;
@@ -31,5 +51,5 @@ async function registerAgentTools() {
 const initialThemeMode = getStoredThemeMode();
 applyThemeToDocument(resolveThemeMode(initialThemeMode));
 
-render(<App initialThemeMode={initialThemeMode} />, document.getElementById("root")!);
+render(<ErrorBoundary><App initialThemeMode={initialThemeMode} /></ErrorBoundary>, document.getElementById("root")!);
 void registerAgentTools();
