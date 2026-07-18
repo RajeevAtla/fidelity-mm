@@ -1,4 +1,5 @@
 const FUND_RESEARCH_URL = "https://fundresearch.fidelity.com/mutual-funds/summary";
+const FUND_CATALOG_URL = "https://institutional.fidelity.com/app/funds-and-products/list/FIIS_PP_SP28_DPL3/fidelity-money-market-funds.html";
 const RATE_SHEET_PATH = "data/fidelity-mm-allclass.json";
 
 type RateSheet = { funds?: Array<{ symbol?: string | null }> };
@@ -21,12 +22,29 @@ const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateShee
 const symbols = [...new Set((rateSheet.funds ?? []).map((fund) => fund.symbol).filter(Boolean))] as string[];
 if (symbols.length === 0) throw new Error(`No fund symbols found in ${RATE_SHEET_PATH}`);
 
+const catalogResponse = await fetch(FUND_CATALOG_URL, {
+  headers: {
+    accept: "text/html,application/xhtml+xml",
+    "user-agent": "fidelity-mm/1.0 (+https://github.com/RajeevAtla/fidelity-mm; personal research scraper)",
+  },
+});
+if (!catalogResponse.ok) {
+  throw new Error("Fidelity catalog returned " + catalogResponse.status + " " + catalogResponse.statusText);
+}
+const catalogText = decodeHtml(await catalogResponse.text()).replace(/\\s+/g, " ");
+
 const scrapedAt = new Date().toISOString();
 const entries: Record<string, MinimumRule> = {};
 const failures: string[] = [];
 
 for (const symbol of symbols) {
-  const sourceUrl = `${FUND_RESEARCH_URL}/${symbol}`;
+  const cusip = findCusip(symbol, catalogText);
+  if (!cusip) {
+    failures.push(symbol + ": CUSIP was not found in " + FUND_CATALOG_URL);
+    continue;
+  }
+
+  const sourceUrl = FUND_RESEARCH_URL + "/" + cusip;
   const response = await fetch(sourceUrl, {
     headers: {
       accept: "text/html,application/xhtml+xml",
@@ -58,7 +76,7 @@ if (failures.length > 0) {
   throw new Error(`Could not refresh all fund minimums:\n${failures.join("\n")}`);
 }
 
-const json = `${JSON.stringify({ source: FUND_RESEARCH_URL, scrapedAt, count: Object.keys(entries).length, funds: entries }, null, 2)}\n`;
+const json = `${JSON.stringify({ source: FUND_CATALOG_URL, scrapedAt, count: Object.keys(entries).length, funds: entries }, null, 2)}\n`;
 await Bun.write(outPath, json);
 console.log(json);
 
@@ -79,6 +97,15 @@ function parseMinimum(html: string): number | null {
   }
 
   return null;
+}
+
+function findCusip(symbol: string, catalogText: string): string | null {
+  const symbolPattern = new RegExp("\\\\b" + symbol + "\\\\b", "i");
+  const symbolMatch = symbolPattern.exec(catalogText);
+  if (!symbolMatch) return null;
+  const nearby = catalogText.slice(Math.max(0, symbolMatch.index - 180), symbolMatch.index + 220);
+  const cusip = nearby.match(/\\b[0-9A-Z]{9}\\b/gi)?.find((value) => value.toUpperCase() !== symbol);
+  return cusip?.toUpperCase() ?? null;
 }
 
 function formatMinimum(amount: number): string {
