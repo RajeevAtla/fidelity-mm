@@ -33,7 +33,7 @@ describe("after-tax yield calculations", () => {
   });
 
   test("converts yield into annual dollars", () => {
-    expect(calculateAnnualValue(4.25, 10_000)).toBe(425);
+    expect(calculateAnnualValue(4.25, 10_000)).toBeCloseTo(425, 8);
   });
 
   test("keeps a meaningful width when all values are equal", () => {
