@@ -1,5 +1,6 @@
 const FUND_RESEARCH_URL = "https://fundresearch.fidelity.com/mutual-funds/summary";
 const FUND_CATALOG_URL = "https://institutional.fidelity.com/app/funds-and-products/list/FIIS_PP_SP28_DPL3/fidelity-money-market-funds.html";
+const FUND_SUMMARY_API = "https://fundresearch.fidelity.com/mutual-funds/api/v1/investments";
 const RATE_SHEET_PATH = "data/fidelity-mm-allclass.json";
 
 type RateSheet = { funds?: Array<{ symbol?: string | null }> };
@@ -45,24 +46,24 @@ for (const symbol of symbols) {
   }
 
   const sourceUrl = FUND_RESEARCH_URL + "/" + cusip;
-  const response = await fetch(sourceUrl, {
+  const apiUrl = FUND_SUMMARY_API + "/" + cusip + "/summary?funduniverse=RETAIL&period=10YR&documentId=" + cusip;
+  const response = await fetch(apiUrl, {
     headers: {
-      accept: "text/html,application/xhtml+xml",
-      "user-agent": "fidelity-mm/1.0 (+https://github.com/local/fidelity-mm; personal research scraper)",
+      accept: "application/json",
+      referer: sourceUrl,
+      "user-agent": "fidelity-mm/1.0 (+https://github.com/RajeevAtla/fidelity-mm; personal research scraper)",
     },
   });
 
   if (!response.ok) {
-    failures.push(`${symbol}: Fidelity returned ${response.status}`);
+    failures.push(`${symbol}: Fidelity returned ${response.status} for ${apiUrl}`);
     continue;
   }
 
-  const html = await response.text();
-  const minimum = parseMinimum(html);
-  if (minimum === null) {
-    failures.push(`${symbol}: minimum investment was not found on ${sourceUrl}`);
-    continue;
-  }
+  const summary = await response.json() as {
+    details?: { subjectAreaData?: { minimumInvestmentRetail?: string | number | null } };
+  };
+  const minimum = parseMinimum(summary.details?.subjectAreaData?.minimumInvestmentRetail);
 
   entries[symbol] = {
     minimumInvestment: minimum,
@@ -80,8 +81,9 @@ const json = `${JSON.stringify({ source: FUND_CATALOG_URL, scrapedAt, count: Obj
 await Bun.write(outPath, json);
 console.log(json);
 
-function parseMinimum(html: string): number | null {
-  const text = decodeHtml(html).replace(/\s+/g, " ");
+function parseMinimum(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const text = String(value).replace(/\s+/g, " ");
   const patterns = [
     /minimum\s+(?:initial\s+)?investment\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
     /minimum\s+(?:initial\s+)?purchase\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
