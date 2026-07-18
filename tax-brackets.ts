@@ -6,7 +6,7 @@ export type TaxBracket = {
 export type TaxYearConfig = {
   taxYear: number;
   federal: TaxBracket[];
-  nj: TaxBracket[];
+  states: Record<string, TaxBracket[]>;
   sources: {
     federal: string;
     nj: string;
@@ -30,7 +30,8 @@ export const TAX_YEARS: Record<number, TaxYearConfig> = {
     // NJ publishes continuing rate schedules rather than a separately
     // inflation-indexed bracket table. Keep the current statutory schedule
     // explicit and version it with the active tax year for auditability.
-    nj: [
+    states: {
+      nj: [
       { rate: 1.4, label: "1.40% · $0–$20K" },
       { rate: 1.75, label: "1.75% · $20K–$35K" },
       { rate: 3.5, label: "3.50% · $35K–$40K" },
@@ -38,7 +39,8 @@ export const TAX_YEARS: Record<number, TaxYearConfig> = {
       { rate: 6.37, label: "6.37% · $75K–$500K" },
       { rate: 8.97, label: "8.97% · $500K–$1M" },
       { rate: 10.75, label: "10.75% · $1M+" },
-    ],
+      ],
+    },
     sources: {
       federal: "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-to-the-one-big-beautiful-bill",
       nj: "https://www.nj.gov/www.nj.gov/treasury/taxation/taxtables.shtml",
