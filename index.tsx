@@ -374,7 +374,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               aria-label="Federal marginal tax bracket"
               aria-valuetext={fedB[fi].l}
               min={0}
-              max={6}
+              max={fedB.length - 1}
               value={fi}
               onInput={(e) => setFi(rangeValue(e))}
               className="w-full accent-federal"
@@ -399,7 +399,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               aria-label="New Jersey marginal tax bracket"
               aria-valuetext={njB[ni].l}
               min={0}
-              max={6}
+              max={njB.length - 1}
               value={ni}
               onInput={(e) => setNi(rangeValue(e))}
               className="w-full accent-state"
@@ -490,7 +490,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           </button>
         )}
 
-        {showAll && res.length > 15 && (
+        {showAll && res.length > APP_CONFIG.display.initialFundLimit && (
           <button
             type="button"
             aria-label="Show only the top initial funds"
