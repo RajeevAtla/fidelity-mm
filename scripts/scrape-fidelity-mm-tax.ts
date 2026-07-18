@@ -60,7 +60,7 @@ for (const fund of funds) {
   };
 }
 
-const taxYearMatch = pdfText.match(/(20\\d{2})\\s+Percentage of Income from/);
+const taxYearMatch = pdfText.match(/(20\d{2})\s+Percentage of Income from/);
 const output = {
   sourceUrl: TAX_INFORMATION_URL,
   taxYear: taxYearMatch ? Number(taxYearMatch[1]) : null,
@@ -68,11 +68,11 @@ const output = {
   count: Object.keys(result).length,
   funds: result,
 };
-await Bun.write(outPath, JSON.stringify(output, null, 2) + "\\n");
+await Bun.write(outPath, JSON.stringify(output, null, 2) + "\n");
 console.log(JSON.stringify(output, null, 2));
 
 function findGovernmentSecuritiesPdf(html: string): string {
-  const match = html.match(/ty(\\d{2})-gse-supplemental-letter\\.pdf/i);
+  const match = html.match(/ty(\d{2})-gse-supplemental-letter\.pdf/i);
   const taxYear = match ? Number("20" + match[1]) : new Date().getUTCFullYear() - 1;
   const yearSuffix = String(taxYear).slice(-2);
   return "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty" + yearSuffix + "-gse-supplemental-letter.pdf";
@@ -96,10 +96,15 @@ async function extractPdfText(bytes: Uint8Array): Promise<string> {
 }
 
 function requiredPercentage(text: string, label: string): number {
-  const line = text.split(/\\r?\\n/).find((candidate) => candidate.replace(/[®SM]/g, "").includes(label) && /\\d+(?:\\.\\d+)?%\\s*\\*?$/.test(candidate.trim()));
-  const match = line?.match(/(\\d+(?:\\.\\d+)?)%\\s*\\*?$/);
+  const normalizedLabel = normalizeText(label);
+  const line = text.split(/\r?\n/).find((candidate) => normalizeText(candidate).includes(normalizedLabel) && /\d+(?:\.\d+)?%\s*\*?$/.test(candidate.trim()));
+  const match = line?.match(/(\d+(?:\.\d+)?)%\s*\*?$/);
   if (!match) throw new Error("Could not find tax percentage for " + label);
   return Number(match[1]);
+}
+
+function normalizeText(value: string): string {
+  return value.replace(/[®SM]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function percentageFor(fund: { name?: string; section?: string | null }, percentages: Record<string, number>): number {
