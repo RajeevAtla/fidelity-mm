@@ -4,16 +4,14 @@ import fundMinimums from "./data/fidelity-mm-minimums.json";
 import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
+import { APP_CONFIG } from "./app-config";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 export type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 
-const THEME_STORAGE_KEY = "fidelity-mm-theme-mode";
-const THEME_META_COLORS: Record<ResolvedTheme, string> = {
-  light: "#edf3f8",
-  dark: "#000000",
-};
+const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
+const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
 
 export function getStoredThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
@@ -125,18 +123,7 @@ function buildFunds(rateSheet: RateSheetData): Fund[] {
     });
 }
 
-const CL: Record<Category, string> = {
-  p: "Prime",
-  g: "Government",
-  t: "Treasury",
-  nm: "Natl Muni",
-  nj: "NJ Muni",
-  ny: "NY Muni",
-  ca: "CA Muni",
-  ma: "MA Muni",
-};
-
-const isMuni = (c: Category) => ["nm", "nj", "ny", "ca", "ma"].includes(c);
+const CL = APP_CONFIG.categories.labels;
 
 function displayName(fund: RateSheetFund) {
   const sectionParts = (fund.section ?? "").split(":");
@@ -164,7 +151,7 @@ function at(f: Fund, fr: number, nr: number) {
   return f.y - f.y * (fr / 100) - f.y * (1 - f.se / 100) * (nr / 100);
 }
 
-const allCats: CategoryFilter[] = ["all", "p", "g", "t", "nm", "nj", "ny", "ca", "ma"];
+const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
 
@@ -233,8 +220,8 @@ function barPercent(value: number, min: number, max: number) {
   }
 
   const normalized = Math.max(0, Math.min(1, (value - min) / span));
-  const curved = Math.pow(normalized, 0.72);
-  const width = 12 + curved * 88;
+  const curved = Math.pow(normalized, APP_CONFIG.display.bar.curve);
+  const width = APP_CONFIG.display.bar.minimumWidth + curved * APP_CONFIG.display.bar.normalizedWidth;
   return Math.round(Math.max(0, Math.min(100, width)));
 }
 
@@ -243,7 +230,7 @@ function barWidthClass(value: number) {
 }
 
 function formatAnnualValue(afterTaxYield: number) {
-  return ((afterTaxYield / 100) * 1e7).toLocaleString(undefined, {
+  return ((afterTaxYield / 100) * APP_CONFIG.display.annualBalance).toLocaleString(undefined, {
     maximumFractionDigits: 0,
   });
 }
@@ -260,8 +247,8 @@ function buttonClasses(active: boolean, tone?: string) {
 export default function App(props: { initialThemeMode: ThemeMode }) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => resolveThemeMode("system"));
-  const [fi, setFi] = useState(1);
-  const [ni, setNi] = useState(1);
+  const [fi, setFi] = useState(APP_CONFIG.defaults.federalBracketIndex);
+  const [ni, setNi] = useState(APP_CONFIG.defaults.stateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
 
@@ -322,7 +309,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   }, [res]);
 
   const top = res[0];
-  const show = showAll ? res : res.slice(0, 15);
+  const show = showAll ? res : res.slice(0, APP_CONFIG.display.initialFundLimit);
 
   const summary = useMemo(() => {
     return fedB.map((fb) => ({
@@ -349,7 +336,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               7-day yields as of {rateDate}, from the scraped Fidelity all-class money market
-              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For NJ residents.
+              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For {APP_CONFIG.defaults.state.toUpperCase()} residents.
             </p>
           </div>
 
@@ -401,7 +388,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
           <div className="min-w-0 flex-[1_1_280px]">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">NJ State Bracket</label>
+              <label htmlFor="nj-bracket" className="text-[12px] font-semibold text-text">{APP_CONFIG.defaults.state.toUpperCase()} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
                 {njB[ni].l}
               </span>
@@ -490,7 +477,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           })}
         </div>
 
-        {!showAll && res.length > 15 && (
+        {!showAll && res.length > APP_CONFIG.display.initialFundLimit && (
           <button
             type="button"
             aria-label={`Show all ${res.length} funds`}
@@ -506,13 +493,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         {showAll && res.length > 15 && (
           <button
             type="button"
-            aria-label="Show only the top 15 funds"
+            aria-label="Show only the top initial funds"
             aria-expanded={showAll}
             aria-controls="fund-list"
             onClick={() => setShowAll(false)}
             className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
           >
-            Show top 15 ▴
+            Show top {APP_CONFIG.display.initialFundLimit} ▴
           </button>
         )}
 
