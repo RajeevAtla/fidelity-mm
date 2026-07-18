@@ -31,7 +31,7 @@ const catalogResponse = await fetch(FUND_CATALOG_URL, {
 if (!catalogResponse.ok) {
   throw new Error("Fidelity catalog returned " + catalogResponse.status + " " + catalogResponse.statusText);
 }
-const catalogText = decodeHtml(await catalogResponse.text()).replace(/\\s+/g, " ");
+const catalogText = decodeHtml(await catalogResponse.text()).replace(/\s+/g, " ");
 
 const scrapedAt = new Date().toISOString();
 const entries: Record<string, MinimumRule> = {};
@@ -100,11 +100,11 @@ function parseMinimum(html: string): number | null {
 }
 
 function findCusip(symbol: string, catalogText: string): string | null {
-  const symbolPattern = new RegExp("\\\\b" + symbol + "\\\\b", "i");
+  const symbolPattern = new RegExp("\\b" + symbol + "\\b", "i");
   const symbolMatch = symbolPattern.exec(catalogText);
   if (!symbolMatch) return null;
   const nearby = catalogText.slice(Math.max(0, symbolMatch.index - 180), symbolMatch.index + 220);
-  const cusip = nearby.match(/\\b[0-9A-Z]{9}\\b/gi)?.find((value) => value.toUpperCase() !== symbol);
+  const cusip = nearby.match(/\b[0-9A-Z]{9}\b/gi)?.find((value) => value.toUpperCase() !== symbol);
   return cusip?.toUpperCase() ?? null;
 }
 
