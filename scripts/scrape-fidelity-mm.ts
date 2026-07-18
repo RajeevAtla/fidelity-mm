@@ -1,4 +1,5 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import { fetchWithRetry } from "../fetch-utils";
 
 const PAGE_URL = FIDELITY_SOURCES.rateSheetPage;
 const DATA_URL = FIDELITY_SOURCES.rateSheetApi;
@@ -84,7 +85,7 @@ Use --out to also write the JSON to a file.`);
 
 const groupSystemName = TAB_TO_GROUP[tab];
 const apiUrl = `${DATA_URL}?groupSystemName=${encodeURIComponent(groupSystemName)}`;
-const response = await fetch(apiUrl, {
+const response = await fetchWithRetry(apiUrl, {
   headers: {
     accept: "application/json,text/plain,*/*",
     referer: PAGE_URL,
