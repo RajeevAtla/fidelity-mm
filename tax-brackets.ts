@@ -46,7 +46,7 @@ export const TAX_YEARS: Record<number, TaxYearConfig> = {
   },
 };
 
-export const ACTIVE_TAX_YEAR = 2026;
+export const ACTIVE_TAX_YEAR = Math.max(...Object.keys(TAX_YEARS).map(Number));
 export const ACTIVE_TAX_CONFIG = TAX_YEARS[ACTIVE_TAX_YEAR];
 
 if (!ACTIVE_TAX_CONFIG) {
