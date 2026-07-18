@@ -1,4 +1,5 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import { fetchWithRetry } from "../fetch-utils";
 
 const FUND_RESEARCH_URL = FIDELITY_SOURCES.fundResearch;
 const FUND_CATALOG_URL = FIDELITY_SOURCES.fundCatalog;
@@ -11,6 +12,8 @@ type MinimumRule = {
   minimumLabel: string;
   sourceUrl: string;
   scrapedAt: string;
+  status?: "verified" | "fallback";
+  fallbackReason?: string;
 };
 
 const outIndex = process.argv.indexOf("--out");
@@ -26,7 +29,7 @@ const existingMinimums = await readExistingMinimums();
 const symbols = [...new Set((rateSheet.funds ?? []).map((fund) => fund.symbol).filter(Boolean))] as string[];
 if (symbols.length === 0) throw new Error(`No fund symbols found in ${RATE_SHEET_PATH}`);
 
-const catalogResponse = await fetch(FUND_CATALOG_URL, {
+const catalogResponse = await fetchWithRetry(FUND_CATALOG_URL, {
   headers: {
     accept: "text/html,application/xhtml+xml",
     "user-agent": SCRAPER_USER_AGENT,
@@ -50,7 +53,7 @@ for (const symbol of symbols) {
 
   const sourceUrl = FUND_RESEARCH_URL + "/" + cusip;
   const apiUrl = FUND_SUMMARY_API + "/" + cusip + "/summary?funduniverse=RETAIL&period=10YR&documentId=" + cusip;
-  const response = await fetch(apiUrl, {
+  const response = await fetchWithRetry(apiUrl, {
     headers: {
       accept: "application/json",
       referer: sourceUrl,
@@ -66,6 +69,8 @@ for (const symbol of symbols) {
         ...existing,
         sourceUrl,
         scrapedAt,
+        status: "fallback",
+        fallbackReason: "Fidelity summary API request failed",
       };
       continue;
     }
@@ -77,12 +82,23 @@ for (const symbol of symbols) {
     details?: { subjectAreaData?: { minimumInvestmentRetail?: string | number | null } };
   };
   const minimum = parseMinimum(summary.details?.subjectAreaData?.minimumInvestmentRetail);
+  if (minimum === null) {
+    const existing = existingMinimums[symbol];
+    if (existing) {
+      entries[symbol] = { ...existing, sourceUrl, scrapedAt, status: "fallback", fallbackReason: "Fidelity returned no parseable minimum" };
+      console.warn(symbol + ": Fidelity returned no parseable minimum; preserving " + existing.minimumLabel);
+      continue;
+    }
+    failures.push(symbol + ": Fidelity returned no parseable minimum and no checked-in fallback exists");
+    continue;
+  }
 
   entries[symbol] = {
     minimumInvestment: minimum,
     minimumLabel: formatMinimum(minimum),
     sourceUrl,
     scrapedAt,
+    status: "verified",
   };
 }
 
@@ -137,7 +153,8 @@ function findCusip(symbol: string, catalogText: string): string | null {
 }
 function formatMinimum(amount: number): string {
   if (amount === 0) return "$0";
-  if (amount >= 1_000_000 && amount % 1_000_000 === 0) return `$${amount / 1_000_000}M`;
+  const roundedMillion = Math.round(amount / 1_000_000);
+  if (amount >= 1_000_000 && Math.abs(amount - roundedMillion * 1_000_000) < 0.01) return `${roundedMillion}M`;
   if (amount >= 1_000 && amount % 1_000 === 0) return `$${amount / 1_000}K`;
   return `$${amount.toLocaleString("en-US")}`;
 }
