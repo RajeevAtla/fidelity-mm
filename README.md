@@ -38,10 +38,10 @@ The figures shown in the application are informational comparisons. They are not
 | `bar-widths.ts` | Shared calculations used to size and scale comparison bars. |
 | `tax-brackets.ts` | Federal tax bracket data and tax-year configuration. |
 | `data/fidelity-mm-allclass.json` | Yield and fund-class data used by the application. |
-| `data/fidelity-mm-minimums.json` | Minimum investment values, source links, and scrape timestamps. |
+| `data/fidelity-mm-minimums.json` | Minimum investment values, source links, and a top-level check timestamp. |
 | `data/fidelity-mm-tax-rules.json` | Tax-year-specific fund categories and state-exempt percentages. |
 | `scripts/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
-| `scripts/scrape-fidelity-mm-minimums.ts` | Resolves fund symbols to CUSIPs and refreshes minimum investment data. |
+| `scripts/scrape-fidelity-mm-minimums.ts` | Uses Fidelity fund numbers to refresh minimum investment data. |
 | `scripts/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
 | `farm.config.ts` | Farm build configuration, including the deployment base path. |
 | `.github/workflows/data.yml` | Scheduled and manual data-refresh workflow. |
@@ -100,6 +100,7 @@ The build output is written to `dist/`. It is safe to remove and regenerate this
 | --- | --- |
 | `bun run dev` | Starts the local development server. |
 | `bun run build` | Generates Tailwind CSS and creates a production Farm build. |
+| `bun run typecheck` | Type-checks the app, tests, and data scripts. |
 | `bun run preview` | Serves the production build for local inspection. |
 | `bun run scrape:fidelity` | Refreshes the yield and fund-class data file. |
 | `bun run scrape:fidelity-minimums` | Refreshes the minimum investment data file. |
@@ -124,14 +125,14 @@ The minimum investment file has this general structure:
 ```json
 {
   "source": "https://institutional.fidelity.com/...",
-  "scrapedAt": "2026-01-01T00:00:00.000Z",
+  "checkedAt": "2026-01-01T00:00:00.000Z",
   "count": 1,
   "funds": {
     "FUND_SYMBOL": {
       "minimumInvestment": 1000,
       "minimumLabel": "$1K",
-      "sourceUrl": "https://fundresearch.fidelity.com/mutual-funds/summary/...",
-      "scrapedAt": "2026-01-01T00:00:00.000Z"
+      "sourceUrl": "https://institutional.fidelity.com/app/fund/sasid/details/...",
+      "status": "verified"
     }
   }
 }
@@ -139,14 +140,13 @@ The minimum investment file has this general structure:
 
 Minimum refreshes use the following process:
 
-1. Read the symbols present in `data/fidelity-mm-allclass.json`.
-2. Find each symbol and its nine-character CUSIP in Fidelity's money-market fund catalog.
-3. Request the fund summary data associated with that CUSIP.
-4. Read the retail minimum investment value from Fidelity's summary response.
-5. Store the numeric value, a compact display label, the Fidelity source URL, and the refresh timestamp.
-6. Preserve an existing checked-in value when Fidelity does not expose an API response for a closed or institutional share class.
+1. Read the symbols and Fidelity fund numbers present in `data/fidelity-mm-allclass.json`.
+2. Request each fund's institutional overview data using its fund number.
+3. Read the `Minimum Initial Investment` feature from Fidelity's response.
+4. Store the numeric value, a compact display label, and the Fidelity details URL.
+5. Store one top-level `checkedAt` timestamp after every fund has been verified.
 
-The fallback behavior is intentional. Some institutional or closed classes have valid fund research pages but do not return a retail summary response. A failed refresh still stops if a symbol has neither a current API response nor an existing checked-in value.
+The refresh is all-or-nothing: if Fidelity does not return a parseable minimum for every fund, the scraper exits without replacing the checked-in file.
 
 Run the minimum scraper manually with:
 
@@ -154,7 +154,7 @@ Run the minimum scraper manually with:
 bun run scrape:fidelity-minimums -- --out data/fidelity-mm-minimums.json
 ```
 
-Review the resulting diff before committing changes. The source URL and timestamp should be retained for every fund.
+Review the resulting diff before committing changes. Each fund retains its source URL, while `checkedAt` is stored once at the document root.
 
 ## Data refresh automation
 
@@ -193,7 +193,7 @@ Tax calculations are estimates based on the selected federal brackets. State and
 
 The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a category and New Jersey state-exempt percentage.
 
-Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, refresh timestamp, category, and percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
+Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, a top-level check timestamp, category, and percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
 
 The tax letter is a PDF. The automated workflow installs `poppler-utils` and uses `pdftotext` to extract its table. To run this locally, install Poppler or another distribution that provides the `pdftotext` command before running:
 
@@ -220,15 +220,15 @@ If the build succeeds but the site is unavailable, check the repository's Pages 
 
 ## Updating fund mappings
 
-Fund minimums are keyed by ticker symbol, while Fidelity's research endpoints use CUSIPs. The CUSIP relationship is resolved from Fidelity's catalog during each refresh; it is not maintained as a manually duplicated list in the application.
+Fund minimums are keyed by ticker symbol, while Fidelity's institutional endpoint uses the fund numbers already supplied by the daily rate sheet. No separate symbol-to-CUSIP mapping is required.
 
 If a symbol cannot be resolved:
 
 - Confirm that it exists in `data/fidelity-mm-allclass.json`.
-- Check Fidelity's money-market catalog for a matching symbol and CUSIP.
-- Confirm that the catalog's symbol/CUSIP labels have not changed.
+- Confirm that the rate sheet includes both a symbol and fund number.
+- Open the fund's institutional details URL and confirm its number has not changed.
 - Run the scraper again and inspect the error message.
-- Do not guess a CUSIP or copy a nearby fund's minimum.
+- Do not guess a fund number or copy a nearby fund's minimum.
 
 When a fund is renamed, closed, or replaced, update the source data and verify that the old symbol is no longer displayed.
 
@@ -258,7 +258,7 @@ For data changes, verify that:
 - Every displayed symbol has a matching minimum entry.
 - Every minimum has a Fidelity source URL.
 - Numeric values and labels agree.
-- The refresh timestamp is present.
+- Each generated document has a valid top-level `checkedAt` timestamp.
 - No unexpected fund classes were added or removed.
 - The generated JSON is valid and formatted consistently.
 
@@ -287,15 +287,15 @@ Check for invalid CSS nesting, missing imports, malformed TypeScript, and refere
 
 ### A fund minimum cannot be refreshed
 
-The most common causes are a missing catalog match, a changed Fidelity page structure, or a share class that is not available through Fidelity's retail summary API. Check the scraper output and the fund's source URL before changing data.
+The most common causes are a missing fund number, a changed Fidelity response structure, or a temporary request failure. Check the scraper output and the fund's source URL before changing data.
 
 ### The scheduled workflow fails
 
 Open the failed **Refresh Fidelity Data** run and inspect the first failing step. Common causes include:
 
-- A changed Fidelity catalog format.
+- A changed Fidelity response format.
 - A temporary Fidelity response failure.
-- A missing fund symbol or CUSIP.
+- A missing fund symbol or fund number.
 - A malformed generated data file.
 - A repository permission or branch-protection change.
 

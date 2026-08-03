@@ -7,9 +7,8 @@ export const DATA_PATHS = {
 export const FIDELITY_SOURCES = {
   rateSheetPage: "https://institutional.fidelity.com/app/funds/dailyratesheets",
   rateSheetApi: "https://institutional.fidelity.com/app/funds/data/dailyratesheets.json",
-  fundCatalog: "https://institutional.fidelity.com/app/funds-and-products/list/FIIS_PP_SP28_DPL3/fidelity-money-market-funds.html",
-  fundResearch: "https://fundresearch.fidelity.com/mutual-funds/summary",
-  fundSummaryApi: "https://fundresearch.fidelity.com/mutual-funds/api/v1/investments",
+  fundDetails: "https://institutional.fidelity.com/app/fund/sasid/details",
+  fundDataApi: "https://institutional.fidelity.com/app/fund/data",
   taxInformationPage: "https://www.fidelity.com/tax-information/fidelity-mutual-fund-tax-information",
   repositoryUrl: "https://github.com/RajeevAtla/fidelity-mm",
 } as const;

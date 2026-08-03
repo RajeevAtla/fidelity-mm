@@ -88,7 +88,6 @@ type FundRule = {
   c: Category;
   njExemptPct: number;
   sourceUrl?: string;
-  scrapedAt?: string;
 };
 
 type FundMinimum = { minimumInvestment: number; minimumLabel: string };

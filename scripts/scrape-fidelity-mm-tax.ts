@@ -11,7 +11,6 @@ type TaxRule = {
   c: TaxCategory;
   njExemptPct: number;
   sourceUrl: string;
-  scrapedAt: string;
 };
 
 const outIndex = process.argv.indexOf("--out");
@@ -50,7 +49,6 @@ const percentages = {
   retailTreasuryOnly: requiredPercentage(pdfText, "Fidelity Treasury Only Money Market Fund - All Classes"),
 };
 
-const scrapedAt = new Date().toISOString();
 const result: Record<string, TaxRule> = {};
 for (const fund of funds) {
   const symbol = fund.symbol as string;
@@ -59,7 +57,6 @@ for (const fund of funds) {
     c: category,
     njExemptPct: category === "nj" ? 100 : category === "nm" || category === "ny" || category === "ca" || category === "ma" ? 0 : percentageFor(fund, percentages),
     sourceUrl: pdfUrl,
-    scrapedAt,
   };
 }
 
@@ -67,7 +64,7 @@ const taxYearMatch = pdfText.match(/(20\d{2})\s+Percentage of Income from/);
 const output = {
   sourceUrl: TAX_INFORMATION_URL,
   taxYear: taxYearMatch ? Number(taxYearMatch[1]) : null,
-  scrapedAt,
+  checkedAt: new Date().toISOString(),
   count: Object.keys(result).length,
   funds: result,
 };

@@ -1,19 +1,22 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
 import { fetchWithRetry } from "../fetch-utils";
+import {
+  formatMinimum,
+  initialInvestmentFromOverview,
+  tradingSymbolFromOverview,
+} from "./fidelity-minimum-utils";
 
-const FUND_RESEARCH_URL = FIDELITY_SOURCES.fundResearch;
-const FUND_CATALOG_URL = FIDELITY_SOURCES.fundCatalog;
-const FUND_SUMMARY_API = FIDELITY_SOURCES.fundSummaryApi;
+const FUND_DETAILS_URL = FIDELITY_SOURCES.fundDetails;
+const FUND_DATA_API = FIDELITY_SOURCES.fundDataApi;
 const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
 
-type RateSheet = { funds?: Array<{ symbol?: string | null }> };
+type RateFund = { fundNo?: string | null; symbol?: string | null };
+type RateSheet = { funds?: RateFund[] };
 type MinimumRule = {
-  minimumInvestment: number | null;
+  minimumInvestment: number;
   minimumLabel: string;
   sourceUrl: string;
-  scrapedAt: string;
-  status?: "verified" | "fallback";
-  fallbackReason?: string;
+  status: "verified";
 };
 
 const outIndex = process.argv.indexOf("--out");
@@ -25,149 +28,80 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
 }
 
 const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheet;
-const existingMinimums = await readExistingMinimums();
-const symbols = [...new Set((rateSheet.funds ?? []).map((fund) => fund.symbol).filter(Boolean))] as string[];
-if (symbols.length === 0) throw new Error(`No fund symbols found in ${RATE_SHEET_PATH}`);
-
-const catalogResponse = await fetchWithRetry(FUND_CATALOG_URL, {
-  headers: {
-    accept: "text/html,application/xhtml+xml",
-    "user-agent": SCRAPER_USER_AGENT,
-  },
-});
-if (!catalogResponse.ok) {
-  throw new Error("Fidelity catalog returned " + catalogResponse.status + " " + catalogResponse.statusText);
+const rateFunds = rateSheet.funds ?? [];
+if (rateFunds.length === 0) throw new Error(`No funds found in ${RATE_SHEET_PATH}`);
+const incompleteFunds = rateFunds.filter((fund) => !fund.fundNo || !fund.symbol);
+if (incompleteFunds.length > 0) {
+  throw new Error(`${incompleteFunds.length} rate-sheet funds are missing a fund number or symbol`);
 }
-const catalogText = decodeHtml(await catalogResponse.text()).replace(/\s+/g, " ");
+const funds = rateFunds.filter(
+  (fund): fund is { fundNo: string; symbol: string } => Boolean(fund.fundNo && fund.symbol),
+);
 
-const scrapedAt = new Date().toISOString();
 const entries: Record<string, MinimumRule> = {};
 const failures: string[] = [];
 
-for (const symbol of symbols) {
-  const cusip = findCusip(symbol, catalogText);
-  if (!cusip) {
-    failures.push(symbol + ": CUSIP was not found in " + FUND_CATALOG_URL);
-    continue;
-  }
+let nextFundIndex = 0;
+const workerCount = Math.min(8, funds.length);
+await Promise.all(
+  Array.from({ length: workerCount }, async () => {
+    while (nextFundIndex < funds.length) {
+      const { fundNo, symbol } = funds[nextFundIndex++];
+      const sourceUrl = `${FUND_DETAILS_URL}/${fundNo}.html`;
+      const apiUrl = `${FUND_DATA_API}/${fundNo}.json?filter=overview`;
+      const response = await fetchWithRetry(apiUrl, {
+        headers: {
+          accept: "application/json",
+          referer: sourceUrl,
+          "user-agent": SCRAPER_USER_AGENT,
+        },
+      });
 
-  const sourceUrl = FUND_RESEARCH_URL + "/" + cusip;
-  const apiUrl = FUND_SUMMARY_API + "/" + cusip + "/summary?funduniverse=RETAIL&period=10YR&documentId=" + cusip;
-  const response = await fetchWithRetry(apiUrl, {
-    headers: {
-      accept: "application/json",
-      referer: sourceUrl,
-      "user-agent": SCRAPER_USER_AGENT,
-    },
-  });
+      if (!response.ok) {
+        failures.push(`${symbol}: Fidelity returned ${response.status} for ${apiUrl}`);
+        continue;
+      }
 
-  if (!response.ok) {
-    const existing = existingMinimums[symbol];
-    if (existing) {
-      console.warn(symbol + ": Fidelity API returned " + response.status + "; preserving checked-in minimum " + existing.minimumLabel);
+      const overview = await response.json();
+      const returnedSymbol = tradingSymbolFromOverview(overview);
+      if (returnedSymbol !== symbol) {
+        failures.push(`${symbol}: fund ${fundNo} returned symbol ${returnedSymbol ?? "none"}`);
+        continue;
+      }
+
+      const minimum = initialInvestmentFromOverview(overview);
+      if (minimum === null) {
+        failures.push(`${symbol}: Fidelity returned no parseable minimum for fund ${fundNo}`);
+        continue;
+      }
+
       entries[symbol] = {
-        ...existing,
+        minimumInvestment: minimum,
+        minimumLabel: formatMinimum(minimum),
         sourceUrl,
-        scrapedAt,
-        status: "fallback",
-        fallbackReason: "Fidelity summary API request failed",
+        status: "verified",
       };
-      continue;
     }
-    failures.push(`${symbol}: Fidelity returned ${response.status} for ${apiUrl} and no checked-in fallback exists`);
-    continue;
-  }
+  }),
+);
 
-  const summary = await response.json() as {
-    details?: { subjectAreaData?: { minimumInvestmentRetail?: string | number | null } };
-  };
-  const minimum = parseMinimum(summary.details?.subjectAreaData?.minimumInvestmentRetail);
-  if (minimum === null) {
-    const existing = existingMinimums[symbol];
-    if (existing) {
-      entries[symbol] = { ...existing, sourceUrl, scrapedAt, status: "fallback", fallbackReason: "Fidelity returned no parseable minimum" };
-      console.warn(symbol + ": Fidelity returned no parseable minimum; preserving " + existing.minimumLabel);
-      continue;
-    }
-    failures.push(symbol + ": Fidelity returned no parseable minimum and no checked-in fallback exists");
-    continue;
-  }
-
-  entries[symbol] = {
-    minimumInvestment: minimum,
-    minimumLabel: formatMinimum(minimum),
-    sourceUrl,
-    scrapedAt,
-    status: "verified",
-  };
+if (failures.length > 0 || Object.keys(entries).length !== funds.length) {
+  throw new Error(`Could not verify all fund minimums:\n${failures.sort().join("\n")}`);
 }
 
-if (failures.length > 0) {
-  throw new Error(`Could not refresh all fund minimums:\n${failures.join("\n")}`);
-}
-
-const json = `${JSON.stringify({ source: FUND_CATALOG_URL, scrapedAt, count: Object.keys(entries).length, funds: entries }, null, 2)}\n`;
+const checkedAt = new Date().toISOString();
+const sortedEntries = Object.fromEntries(
+  funds.map(({ symbol }) => [symbol, entries[symbol]]),
+);
+const json = `${JSON.stringify(
+  {
+    source: FUND_DATA_API,
+    checkedAt,
+    count: Object.keys(sortedEntries).length,
+    funds: sortedEntries,
+  },
+  null,
+  2,
+)}\n`;
 await Bun.write(outPath, json);
 console.log(json);
-
-async function readExistingMinimums(): Promise<Record<string, MinimumRule>> {
-  try {
-    const data = JSON.parse(await Bun.file(DATA_PATHS.minimums).text()) as {
-      funds?: Record<string, MinimumRule>;
-    };
-    return data.funds ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function parseMinimum(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const text = String(value).replace(/\s+/g, " ");
-  const directAmount = Number(text.replace(/[$,%]/g, "").replace(/,/g, "").trim());
-  if (Number.isFinite(directAmount)) return directAmount;
-  const patterns = [
-    /minimum\s+(?:initial\s+)?investment\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
-    /minimum\s+(?:initial\s+)?purchase\s*[:$]?\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s*(million|m|thousand|k))?/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (!match) continue;
-    const amount = Number(match[1].replace(/,/g, ""));
-    const suffix = match[2]?.toLowerCase();
-    const multiplier = suffix === "million" || suffix === "m" ? 1_000_000 : suffix === "thousand" || suffix === "k" ? 1_000 : 1;
-    if (Number.isFinite(amount)) return amount * multiplier;
-  }
-
-  return null;
-}
-
-function findCusip(symbol: string, catalogText: string): string | null {
-  const escapedSymbol = symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const afterSymbol = catalogText.match(new RegExp("\\b" + escapedSymbol + "\\b\\s+CUSIP\\s+([0-9A-Z]{9})", "i"));
-  if (afterSymbol) return afterSymbol[1].toUpperCase();
-
-  const beforeSymbol = catalogText.match(new RegExp("CUSIP\\s+([0-9A-Z]{9})\\s+(?:Fund #\\s+\\d+\\s+)?(?:Symbol\\s+)?"+escapedSymbol+"\\b", "i"));
-  return beforeSymbol?.[1]?.toUpperCase() ?? null;
-}
-function formatMinimum(amount: number): string {
-  if (amount === 0) return "$0";
-  const roundedMillion = Math.round(amount / 1_000_000);
-  if (amount >= 1_000_000 && Math.abs(amount - roundedMillion * 1_000_000) < 0.01) return `${roundedMillion}M`;
-  if (amount >= 1_000 && amount % 1_000 === 0) return `$${amount / 1_000}K`;
-  return `$${amount.toLocaleString("en-US")}`;
-}
-
-function decodeHtml(value: string): string {
-  return value
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, decimal: string) => String.fromCodePoint(Number.parseInt(decimal, 10)));
-}

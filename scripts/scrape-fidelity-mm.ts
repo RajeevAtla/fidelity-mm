@@ -104,7 +104,7 @@ const json = `${JSON.stringify(
   {
     sourceUrl: PAGE_URL,
     apiUrl,
-    scrapedAt: new Date().toISOString(),
+    checkedAt: new Date().toISOString(),
     tab,
     groupSystemName,
     sheetTitle: rateSheet.sheetTitle ?? null,
