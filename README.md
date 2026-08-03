@@ -158,12 +158,14 @@ Review the resulting diff before committing changes. Each fund retains its sourc
 
 ## Data refresh automation
 
-The `.github/workflows/data.yml` workflow runs:
+The `.github/workflows/data.yml` workflow refreshes rates and minimums:
 
 - On weekdays at 00:17 UTC.
 - When started manually from the Actions tab.
 
-The workflow installs PDF text-extraction tooling and Bun dependencies, runs the yield, minimum, and tax refresh scripts, and commits changes under `data/` when the generated files differ from the checked-in versions.
+The separate `.github/workflows/tax-data.yml` workflow checks Fidelity's annual tax letter monthly, on the third day at 01:43 UTC, and can also be started manually. Keeping it separate means a missing or delayed annual PDF cannot block weekday rate updates. Both workflows validate the complete checked-in dataset before committing their own files.
+
+Failed refreshes retain logs and generated files as workflow artifacts for 14 days. When two scheduled runs of the same refresh workflow fail consecutively, automation opens an issue or adds the latest run links to the existing issue.
 
 To perform a manual refresh:
 
