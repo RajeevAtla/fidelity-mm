@@ -1,4 +1,5 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import type { MinimumData, RateSheetData } from "../data-contracts";
 import { fetchWithRetry } from "../fetch-utils";
 import {
   formatMinimum,
@@ -9,15 +10,7 @@ import {
 const FUND_DETAILS_URL = FIDELITY_SOURCES.fundDetails;
 const FUND_DATA_API = FIDELITY_SOURCES.fundDataApi;
 const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
-
-type RateFund = { fundNo?: string | null; symbol?: string | null };
-type RateSheet = { funds?: RateFund[] };
-type MinimumRule = {
-  minimumInvestment: number;
-  minimumLabel: string;
-  sourceUrl: string;
-  status: "verified";
-};
+type IdentifiedFund = RateSheetData["funds"][number] & { fundNo: string; symbol: string };
 
 const outIndex = process.argv.indexOf("--out");
 const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : DATA_PATHS.minimums;
@@ -27,18 +20,18 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
   process.exit(0);
 }
 
-const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheet;
-const rateFunds = rateSheet.funds ?? [];
+const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheetData;
+const rateFunds = rateSheet.funds;
 if (rateFunds.length === 0) throw new Error(`No funds found in ${RATE_SHEET_PATH}`);
 const incompleteFunds = rateFunds.filter((fund) => !fund.fundNo || !fund.symbol);
 if (incompleteFunds.length > 0) {
   throw new Error(`${incompleteFunds.length} rate-sheet funds are missing a fund number or symbol`);
 }
 const funds = rateFunds.filter(
-  (fund): fund is { fundNo: string; symbol: string } => Boolean(fund.fundNo && fund.symbol),
+  (fund): fund is IdentifiedFund => Boolean(fund.fundNo && fund.symbol),
 );
 
-const entries: Record<string, MinimumRule> = {};
+const entries: MinimumData["funds"] = {};
 const failures: string[] = [];
 
 let nextFundIndex = 0;
@@ -93,15 +86,12 @@ const checkedAt = new Date().toISOString();
 const sortedEntries = Object.fromEntries(
   funds.map(({ symbol }) => [symbol, entries[symbol]]),
 );
-const json = `${JSON.stringify(
-  {
+const output: MinimumData = {
     source: FUND_DATA_API,
     checkedAt,
     count: Object.keys(sortedEntries).length,
     funds: sortedEntries,
-  },
-  null,
-  2,
-)}\n`;
+};
+const json = `${JSON.stringify(output, null, 2)}\n`;
 await Bun.write(outPath, json);
 console.log(json);

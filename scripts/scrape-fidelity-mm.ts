@@ -1,4 +1,5 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import type { RateSheetData, RateSheetFund } from "../data-contracts";
 import { fetchWithRetry } from "../fetch-utils";
 
 const PAGE_URL = FIDELITY_SOURCES.rateSheetPage;
@@ -49,28 +50,6 @@ type FidelityFund = {
   }>;
 };
 
-type MoneyMarketFund = {
-  fundNo: string;
-  symbol: string | null;
-  name: string;
-  section: string | null;
-  date: string | null;
-  nav: number | null;
-  oneDayYield: number | null;
-  sevenDayYield: number | null;
-  thirtyDayYield: number | null;
-  dailyMilRate: number | null;
-  portfolioNetAssets: number | null;
-  portfolioNetAssetsDate: string | null;
-  weightedAverageMaturityDays: number | null;
-  weightedAverageMaturityDate: string | null;
-  expenseRatioGross: number | null;
-  expenseRatioNet: number | null;
-  monthEndSevenDayYield: number | null;
-  monthEndSevenDayYieldWithoutReimbursement: number | null;
-  monthEndDate: string | null;
-};
-
 const tab = readTab();
 const outIndex = process.argv.indexOf("--out");
 const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : undefined;
@@ -100,8 +79,7 @@ if (!response.ok) {
 
 const rateSheet = (await response.json()) as FidelityRateSheet;
 const funds = normalizeRateSheet(rateSheet);
-const json = `${JSON.stringify(
-  {
+const output: RateSheetData = {
     sourceUrl: PAGE_URL,
     apiUrl,
     checkedAt: new Date().toISOString(),
@@ -113,10 +91,8 @@ const json = `${JSON.stringify(
     requestedPriceDate: rateSheet.requestedPriceDate ?? null,
     count: funds.length,
     funds,
-  },
-  null,
-  2,
-)}\n`;
+};
+const json = `${JSON.stringify(output, null, 2)}\n`;
 
 if (outPath) {
   await Bun.write(outPath, json);
@@ -135,8 +111,8 @@ function readTab(): TabName {
   throw new Error(`Invalid --tab "${value}". Expected allClass, direct, or shortTerm.`);
 }
 
-function normalizeRateSheet(rateSheet: FidelityRateSheet): MoneyMarketFund[] {
-  const funds: MoneyMarketFund[] = [];
+function normalizeRateSheet(rateSheet: FidelityRateSheet): RateSheetFund[] {
+  const funds: RateSheetFund[] = [];
   const primaryDate = rateSheet.milrateYieldDates?.[0] ?? null;
 
   for (const section of rateSheet.classSections ?? []) {

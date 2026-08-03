@@ -1,17 +1,11 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import type { RateSheetData, TaxData, TaxRule } from "../data-contracts";
 import { fetchWithRetry } from "../fetch-utils";
-import { categoryFor, type TaxCategory } from "./fidelity-tax-utils";
+import { categoryFor } from "./fidelity-tax-utils";
 
 const TAX_INFORMATION_URL = FIDELITY_SOURCES.taxInformationPage;
 const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
 const DEFAULT_OUT_PATH = DATA_PATHS.taxRules;
-
-type RateSheet = { funds?: Array<{ symbol?: string | null; name?: string; section?: string | null }> };
-type TaxRule = {
-  c: TaxCategory;
-  njExemptPct: number;
-  sourceUrl: string;
-};
 
 const outIndex = process.argv.indexOf("--out");
 const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : DEFAULT_OUT_PATH;
@@ -21,8 +15,8 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
   process.exit(0);
 }
 
-const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheet;
-const funds = (rateSheet.funds ?? []).filter((fund) => fund.symbol);
+const rateSheet = JSON.parse(await Bun.file(RATE_SHEET_PATH).text()) as RateSheetData;
+const funds = rateSheet.funds.filter((fund) => fund.symbol);
 if (funds.length === 0) throw new Error("No fund symbols found in " + RATE_SHEET_PATH);
 
 const pageResponse = await fetchWithRetry(TAX_INFORMATION_URL, {
@@ -61,9 +55,10 @@ for (const fund of funds) {
 }
 
 const taxYearMatch = pdfText.match(/(20\d{2})\s+Percentage of Income from/);
-const output = {
+if (!taxYearMatch) throw new Error("Could not determine the tax year from Fidelity's tax PDF");
+const output: TaxData = {
   sourceUrl: TAX_INFORMATION_URL,
-  taxYear: taxYearMatch ? Number(taxYearMatch[1]) : null,
+  taxYear: Number(taxYearMatch[1]),
   checkedAt: new Date().toISOString(),
   count: Object.keys(result).length,
   funds: result,

@@ -1,41 +1,21 @@
 import { DATA_PATHS } from "../data-sources";
 import { APP_CONFIG } from "../app-config";
+import type {
+  MinimumData as MinimumDataContract,
+  MinimumRule as MinimumRuleContract,
+  RateSheetData as RateSheetDataContract,
+  RateSheetFund as RateFundContract,
+  TaxData as TaxDataContract,
+  TaxRule as TaxRuleContract,
+} from "../data-contracts";
 import { categoryFor } from "./fidelity-tax-utils";
 
-type RateFund = {
-  fundNo?: string;
-  symbol?: string | null;
-  name?: string;
-  date?: string;
-  nav?: number | null;
-  oneDayYield?: number | null;
-  sevenDayYield?: number | null;
-  thirtyDayYield?: number | null;
-  portfolioNetAssets?: number | null;
-  weightedAverageMaturityDays?: number | null;
-  expenseRatioNet?: number | null;
-  expenseRatioGross?: number | null;
-};
-type MinimumRule = {
-  minimumInvestment?: number | null;
-  minimumLabel?: string;
-  sourceUrl?: string;
-  status?: "verified";
-};
-type TaxRule = {
-  c?: string;
-  njExemptPct?: number;
-  sourceUrl?: string;
-};
-type RateData = {
-  checkedAt?: string;
-  complete?: boolean;
-  requestedPriceDate?: string;
-  count?: number;
-  funds?: RateFund[];
-};
-type MinimumData = { checkedAt?: string; count?: number; funds?: Record<string, MinimumRule> };
-type TaxData = { checkedAt?: string; count?: number; taxYear?: number | null; funds?: Record<string, TaxRule> };
+type RateFund = Partial<RateFundContract>;
+type MinimumRule = Partial<MinimumRuleContract>;
+type TaxRule = Partial<TaxRuleContract>;
+type RateData = Partial<Omit<RateSheetDataContract, "funds">> & { funds?: RateFund[] };
+type MinimumData = Partial<Omit<MinimumDataContract, "funds">> & { funds?: Record<string, MinimumRule> };
+type TaxData = Partial<Omit<TaxDataContract, "funds">> & { funds?: Record<string, TaxRule> };
 
 const rateData = await readJson<RateData>(DATA_PATHS.rateSheet);
 const minimumData = await readJson<MinimumData>(DATA_PATHS.minimums);
