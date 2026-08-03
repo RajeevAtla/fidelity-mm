@@ -6,10 +6,14 @@ import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
 import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
+import { DataFreshness } from "./freshness";
+import { FundResults } from "./fund-results";
+import type { CategoryCode } from "./app-config";
+import type { MinimumData, RateSheetData, RateSheetFund, TaxData } from "./data-contracts";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
-export type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+export type Category = CategoryCode;
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
@@ -71,30 +75,9 @@ type Fund = {
   mn: string;
 };
 type FundResult = Fund & { a: number };
-type RateSheetFund = {
-  symbol: string | null;
-  name: string;
-  section: string | null;
-  sevenDayYield: number | null;
-  expenseRatioNet: number | null;
-  expenseRatioGross: number | null;
-};
-type RateSheetData = {
-  sheetTitle: string | null;
-  requestedPriceDate: string | null;
-  funds: RateSheetFund[];
-};
-type FundRule = {
-  c: Category;
-  njExemptPct: number;
-  sourceUrl?: string;
-};
+const FUND_RULES = (fundTaxRules as TaxData).funds;
 
-type FundMinimum = { minimumInvestment: number; minimumLabel: string };
-
-const FUND_RULES = (fundTaxRules as { funds: Record<string, FundRule> }).funds;
-
-const FUND_MINIMUMS = (fundMinimums as { funds: Record<string, FundMinimum> }).funds;
+const FUND_MINIMUMS = (fundMinimums as MinimumData).funds;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
@@ -251,7 +234,6 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const [showAll, setShowAll] = useState(false);
 
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
-  const rateDate = rateSheet.requestedPriceDate ?? "latest scrape";
   const fr = fedB[fi].r;
   const nr = stateB[ni].r;
 
@@ -307,8 +289,6 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   }, [res]);
 
   const top = res[0];
-  const show = showAll ? res : res.slice(0, APP_CONFIG.display.initialFundLimit);
-
   const summary = useMemo(() => {
     return fedB.map((fb) => ({
       fb,
@@ -333,9 +313,10 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               All {F.length} Fidelity Money Market Funds — After-Tax Yield
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
-              7-day yields as of {rateDate}, from the scraped Fidelity all-class money market
-              sheet. Single filer brackets ({ACTIVE_TAX_YEAR} tax year). For {CURRENT_STATE.abbreviation} residents.
+              Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
+              For {CURRENT_STATE.abbreviation} residents.
             </p>
+            <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} />
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
@@ -430,76 +411,18 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           })}
         </div>
 
-        <div id="fund-list" className="space-y-[3px]" aria-live="polite" aria-label={`${res.length} funds shown`}>
-          {show.map((r, i) => {
-            const best = i === 0;
-            const w = barPercent(r.a, widthRange.min, widthRange.max);
-            const fillClass = best ? "bg-best-bar" : categoryFillClasses[r.c];
-            return (
-              <div
-                key={r.t}
-                className="grid grid-cols-[52px_minmax(0,1fr)_52px_42px] items-center gap-x-1"
-              >
-                <div className="w-[52px] flex-shrink-0 text-[11px] font-semibold text-text">
-                  {r.t}
-                </div>
-                <div
-                  className="relative h-6 min-w-0 overflow-hidden rounded-md border border-track-border bg-track"
-                  role="img"
-                  aria-label={`${r.t} ${r.a.toFixed(3)}% after-tax yield`}
-                >
-                  <div
-                    className={cx(
-                      "absolute inset-y-0 left-0 rounded-r-full rounded-l-none",
-                      fillClass,
-                      barWidthClass(w),
-                    )}
-                  />
-                  <span
-                    className={cx(
-                      "bar-value-label absolute right-[4px] top-[3px] rounded bg-page/85 px-[3px] text-[11px] font-semibold leading-none",
-                      best ? "font-bold" : "font-medium",
-                    )}
-                  >
-                    {r.a.toFixed(3)}%
-                  </span>
-                </div>
-                <div className="w-[52px] flex-shrink-0 pl-1 text-right text-[9px] text-muted">
-                  {CL[r.c]}
-                </div>
-                <div className="w-[42px] flex-shrink-0 pl-1 text-right text-[9px] text-subtle">
-                  {r.mn}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {!showAll && res.length > APP_CONFIG.display.initialFundLimit && (
-          <button
-            type="button"
-            aria-label={`Show all ${res.length} funds`}
-            aria-expanded={showAll}
-            aria-controls="fund-list"
-            onClick={() => setShowAll(true)}
-            className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
-          >
-            Show all {res.length} funds ▾
-          </button>
-        )}
-
-        {showAll && res.length > APP_CONFIG.display.initialFundLimit && (
-          <button
-            type="button"
-            aria-label="Show only the top initial funds"
-            aria-expanded={showAll}
-            aria-controls="fund-list"
-            onClick={() => setShowAll(false)}
-            className={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
-          >
-            Show top {APP_CONFIG.display.initialFundLimit} ▴
-          </button>
-        )}
+        <FundResults
+          funds={res}
+          expanded={showAll}
+          initialLimit={APP_CONFIG.display.initialFundLimit}
+          categoryLabels={CL}
+          barClass={(fund, index) => cx(
+            index === 0 ? "bg-best-bar" : categoryFillClasses[fund.c],
+            barWidthClass(barPercent(fund.a, widthRange.min, widthRange.max)),
+          )}
+          toggleButtonClass={cx(buttonBase, neutralButtonClasses, "mt-[6px] px-3")}
+          onExpandedChange={setShowAll}
+        />
 
         {top && (
           <div className="my-2.5 overflow-hidden rounded-lg border border-success-border bg-success-bg shadow-sm">

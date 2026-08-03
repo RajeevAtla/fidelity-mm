@@ -2,6 +2,7 @@
 @source "./index.tsx";
 @source "./main.tsx";
 @source "./bar-widths.ts";
+@source "./freshness.tsx";
 
 @font-face {
   font-family: "Soft Grotesk";
