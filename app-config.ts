@@ -3,8 +3,8 @@ export type CategoryCode = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 export const APP_CONFIG = {
   site: {
     basePath: "/fidelity-mm/",
-    productionOrigin: "https://rajeevatla.github.io",
-    canonicalUrl: "https://rajeevatla.github.io/fidelity-mm/",
+    productionOrigin: "https://rajeevatla.com",
+    canonicalUrl: "https://rajeevatla.com/fidelity-mm/",
     developmentPort: 9001,
   },
   defaults: {

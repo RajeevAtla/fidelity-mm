@@ -3,9 +3,25 @@
 @source "./main.tsx";
 @source "./bar-widths.ts";
 
+@font-face {
+  font-family: "Soft Grotesk";
+  src: url("./fonts/SoftGrotesk/TestVariableFonts/SoftGroteskTestVF.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tripsis";
+  src: url("./fonts/Test-Tripsis/TestVariableFonts/TripsisTestVF.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
 @theme {
-  --font-body: system-ui, sans-serif;
-  --font-display: Georgia, serif;
+  --font-body: "Soft Grotesk", system-ui, sans-serif;
+  --font-display: "Tripsis", Georgia, serif;
 
   --color-page: var(--page-bg);
   --color-page-alt: var(--page-bg-alt);
