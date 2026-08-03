@@ -160,8 +160,7 @@ Review the resulting diff before committing changes. The source URL and timestam
 
 The `.github/workflows/data.yml` workflow runs:
 
-- On weekdays at midnight UTC.
-- On every push to `main`.
+- On weekdays at 00:17 UTC.
 - When started manually from the Actions tab.
 
 The workflow installs PDF text-extraction tooling and Bun dependencies, runs the yield, minimum, and tax refresh scripts, and commits changes under `data/` when the generated files differ from the checked-in versions.
@@ -173,7 +172,7 @@ To perform a manual refresh:
 3. Choose **Run workflow** on the `main` branch.
 4. Review the resulting data commit and workflow logs.
 
-A refresh commit may trigger the deployment workflow. The data workflow requires write access to repository contents because it commits refreshed JSON files.
+A successful refresh triggers the deployment workflow after its data commit reaches `main`. The data workflow requires write access to repository contents because it commits refreshed JSON files.
 
 ## Tax calculations
 

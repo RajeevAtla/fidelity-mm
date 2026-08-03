@@ -1,8 +1,10 @@
 import { DATA_PATHS } from "../data-sources";
 import { APP_CONFIG } from "../app-config";
+import { categoryFor } from "./fidelity-tax-utils";
 
 type RateFund = {
   symbol?: string | null;
+  name?: string;
   sevenDayYield?: number | null;
   expenseRatioNet?: number | null;
   expenseRatioGross?: number | null;
@@ -57,6 +59,9 @@ for (const symbol of requiredSymbols) {
   }
   if (tax) {
     if (!APP_CONFIG.categories.order.includes(tax.c as (typeof APP_CONFIG.categories.order)[number])) errors.push(symbol + ": unsupported category " + tax.c);
+    if (rate?.name && tax.c !== categoryFor(rate.name)) {
+      errors.push(symbol + ": category " + tax.c + " does not match fund name (expected " + categoryFor(rate.name) + ")");
+    }
     if (!finite(tax.njExemptPct) || tax.njExemptPct < 0 || tax.njExemptPct > 100) errors.push(symbol + ": invalid NJ exemption percentage");
     if (!tax.sourceUrl || !tax.scrapedAt) errors.push(symbol + ": incomplete tax provenance");
   }
