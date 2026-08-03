@@ -2,7 +2,8 @@ name: Refresh Fidelity Data
 
 on:
   schedule:
-    - cron: "0 0 * * 1-5"
+    # Avoid the top-of-hour scheduling congestion documented by GitHub.
+    - cron: "17 0 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +31,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Refresh data files
         run: |
@@ -43,14 +44,14 @@ jobs:
 
       - name: Commit updates
         run: |
-          if git diff --quiet -- data; then
+          git add data/
+          if git diff --cached --quiet; then
             echo "No data changes to commit."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
           DATETIME_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           git commit -m "✨ Refresh Fidelity data ($DATETIME_UTC)"
           git pull --rebase origin main

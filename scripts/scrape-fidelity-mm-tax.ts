@@ -1,14 +1,14 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
 import { fetchWithRetry } from "../fetch-utils";
+import { categoryFor, type TaxCategory } from "./fidelity-tax-utils";
 
 const TAX_INFORMATION_URL = FIDELITY_SOURCES.taxInformationPage;
 const RATE_SHEET_PATH = DATA_PATHS.rateSheet;
 const DEFAULT_OUT_PATH = DATA_PATHS.taxRules;
 
-type Category = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 type RateSheet = { funds?: Array<{ symbol?: string | null; name?: string; section?: string | null }> };
 type TaxRule = {
-  c: Category;
+  c: TaxCategory;
   njExemptPct: number;
   sourceUrl: string;
   scrapedAt: string;
@@ -117,17 +117,4 @@ function percentageFor(fund: { name?: string; section?: string | null }, percent
   if (name.includes("treasury")) return fimm ? percentages.fimmTreasury : percentages.retailTreasury;
   if (name.includes("government")) return fimm ? percentages.fimmGovernment : percentages.retailGovernment;
   return fimm ? percentages.fimmMoneyMarket : percentages.retailMoneyMarket;
-}
-
-function categoryFor(name: string): Category {
-  const value = name.toLowerCase();
-  if (value.includes("new jersey")) return "nj";
-  if (value.includes("new york")) return "ny";
-  if (value.includes("california")) return "ca";
-  if (value.includes("massachusetts")) return "ma";
-  if (value.includes("tax exempt")) return "nm";
-  if (value.includes("treasury only")) return "t";
-  if (value.includes("treasury")) return "t";
-  if (value.includes("government")) return "g";
-  return "p";
 }

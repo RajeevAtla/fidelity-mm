@@ -173,8 +173,8 @@
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
     "FZEXX": {
-      "c": "p",
-      "njExemptPct": 14.56,
+      "c": "nm",
+      "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
@@ -191,8 +191,8 @@
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
     "FDEXX": {
-      "c": "p",
-      "njExemptPct": 14.56,
+      "c": "nm",
+      "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
@@ -209,8 +209,8 @@
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
     "FERXX": {
-      "c": "p",
-      "njExemptPct": 14.56,
+      "c": "nm",
+      "njExemptPct": 0,
       "sourceUrl": "https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/taxes/ty25-gse-supplemental-letter.pdf",
       "scrapedAt": "2026-07-18T21:15:32.705Z"
     },
