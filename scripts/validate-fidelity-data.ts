@@ -1,5 +1,5 @@
 import { DATA_PATHS } from "../data-sources";
-import { APP_CONFIG } from "../app-config";
+import { isCategoryCode } from "../categories";
 import type {
   MinimumData as MinimumDataContract,
   MinimumRule as MinimumRuleContract,
@@ -91,7 +91,7 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
       if ("scrapedAt" in minimum) errors.push(symbol + ": minimum has a legacy per-fund scrapedAt");
     }
     if (tax) {
-      if (!APP_CONFIG.categories.order.includes(tax.c as (typeof APP_CONFIG.categories.order)[number])) errors.push(symbol + ": unsupported category " + tax.c);
+      if (!isCategoryCode(tax.c)) errors.push(symbol + ": unsupported category " + tax.c);
       if (rate?.name && tax.c !== categoryFor(rate.name)) {
         errors.push(symbol + ": category " + tax.c + " does not match fund name (expected " + categoryFor(rate.name) + ")");
       }

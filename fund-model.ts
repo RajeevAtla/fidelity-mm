@@ -1,5 +1,5 @@
 import { calculateAfterTaxYield } from "./calculations";
-import type { CategoryCode } from "./app-config";
+import type { CategoryCode } from "./categories";
 import type { MinimumRule, RateSheetData, RateSheetFund, TaxRule } from "./data-contracts";
 
 export type CategoryFilter = CategoryCode | "all";

@@ -3,6 +3,7 @@ import allClassRates from "./data/fidelity-mm-allclass.json";
 import fundMinimums from "./data/fidelity-mm-minimums.json";
 import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
+import { parseAppData } from "./data-boundary";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
 import { calculateAnnualValue, calculateBarWidth } from "./calculations";
@@ -25,10 +26,7 @@ import {
 } from "./theme-browser";
 import { resolveThemeMode } from "./theme";
 import type { ResolvedTheme, ThemeMode } from "./theme";
-import type { CategoryCode } from "./app-config";
-import type { MinimumData, RateSheetData, TaxData } from "./data-contracts";
-
-export type Category = CategoryCode;
+import type { CategoryCode } from "./categories";
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
@@ -40,9 +38,7 @@ const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIn
 const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
 
 const CL = APP_CONFIG.categories.labels;
-const isMuni = (category: Category) => APP_CONFIG.categories.municipal.includes(category);
-
-const rateSheet = allClassRates as RateSheetData;
+const { rateSheet, minimumData, taxData } = parseAppData(allClassRates, fundMinimums, fundTaxRules);
 
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
@@ -52,7 +48,7 @@ const buttonBase =
   "inline-flex items-center rounded-md border px-2 py-[5px] text-[10px] font-medium leading-none transition-colors";
 const neutralButtonClasses =
   "border-btn-border bg-btn-bg text-btn-text data-[active=true]:border-border-strong data-[active=true]:bg-btn-active-bg data-[active=true]:text-btn-active-text";
-const categoryButtonVariants: Record<Category, string> = {
+const categoryButtonVariants: Record<CategoryCode, string> = {
   p: "data-[active=true]:border-cat-p-border data-[active=true]:bg-cat-p-fill data-[active=true]:text-cat-p-text",
   g: "data-[active=true]:border-cat-g-border data-[active=true]:bg-cat-g-fill data-[active=true]:text-cat-g-text",
   t: "data-[active=true]:border-cat-t-border data-[active=true]:bg-cat-t-fill data-[active=true]:text-cat-t-text",
@@ -62,7 +58,7 @@ const categoryButtonVariants: Record<Category, string> = {
   ca: "data-[active=true]:border-cat-ca-border data-[active=true]:bg-cat-ca-fill data-[active=true]:text-cat-ca-text",
   ma: "data-[active=true]:border-cat-ma-border data-[active=true]:bg-cat-ma-fill data-[active=true]:text-cat-ma-text",
 };
-const categoryFillClasses: Record<Category, string> = {
+const categoryFillClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-fill",
   g: "bg-cat-g-fill",
   t: "bg-cat-t-fill",
@@ -72,7 +68,7 @@ const categoryFillClasses: Record<Category, string> = {
   ca: "bg-cat-ca-fill",
   ma: "bg-cat-ma-fill",
 };
-const categoryCellClasses: Record<Category, string> = {
+const categoryCellClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-soft text-cat-p-text",
   g: "bg-cat-g-soft text-cat-g-text",
   t: "bg-cat-t-soft text-cat-t-text",
@@ -82,7 +78,7 @@ const categoryCellClasses: Record<Category, string> = {
   ca: "bg-cat-ca-soft text-cat-ca-text",
   ma: "bg-cat-ma-soft text-cat-ma-text",
 };
-const categoryCellTextClasses: Record<Category, string> = {
+const categoryCellTextClasses: Record<CategoryCode, string> = {
   p: "text-cat-p-text",
   g: "text-cat-g-text",
   t: "text-cat-t-text",
@@ -92,7 +88,7 @@ const categoryCellTextClasses: Record<Category, string> = {
   ca: "text-cat-ca-text",
   ma: "text-cat-ma-text",
 };
-const categoryLegendClasses: Record<Category, string> = {
+const categoryLegendClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-soft text-cat-p-text border-cat-p-border",
   g: "bg-cat-g-soft text-cat-g-text border-cat-g-border",
   t: "bg-cat-t-soft text-cat-t-text border-cat-t-border",
@@ -137,7 +133,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
   const funds = useMemo(
-    () => buildFunds(rateSheet, (fundTaxRules as TaxData).funds, (fundMinimums as MinimumData).funds),
+    () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
     [],
   );
 
@@ -424,7 +420,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
         <div className="mt-2.5 text-[9px] leading-[1.5] text-subtle">
           <strong className="text-text">Legend:</strong>{" "}
-          {(Object.entries(CL) as [Category, string][]).map(([k, v]) => (
+          {(Object.entries(CL) as [CategoryCode, string][]).map(([k, v]) => (
             <span
               key={k}
               className={cx(
