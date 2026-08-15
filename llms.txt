@@ -20,6 +20,7 @@ This page compares Fidelity money market funds using scraped 7-day yields and an
 - Fund data is sourced from Fidelity's all-class money market rate sheet.
 - Yields are seven-day yields and are net of the displayed expense ratio.
 - State exemption percentages are approximate assumptions and may vary by year.
+- State-specific municipal income is treated as exempt only for a matching resident state; national and other-state municipal income remains state-taxable in this estimate.
 - Washington's separate capital-gains tax is not applied to money-market yield income.
 
 ## Accessibility

@@ -108,8 +108,10 @@ export const TAX_YEARS: Record<number, TaxYearConfig> = {
   },
 };
 
-if (Object.keys(TAX_YEARS[2026].states).length !== SUPPORTED_STATE_CODES.length) {
-  throw new Error("Every supported state needs a tax configuration");
+for (const [taxYear, config] of Object.entries(TAX_YEARS)) {
+  if (Object.keys(config.states).length !== SUPPORTED_STATE_CODES.length) {
+    throw new Error(`Every supported state needs a tax configuration for ${taxYear}`);
+  }
 }
 
 export const ACTIVE_TAX_YEAR = Math.max(...Object.keys(TAX_YEARS).map(Number));

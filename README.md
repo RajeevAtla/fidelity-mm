@@ -195,6 +195,8 @@ Tax calculations are estimates based on the selected federal and resident-state 
 
 The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a fund category and government-obligation exemption percentage. The selected resident state determines the treatment of the available state-specific municipal fund categories.
 
+State-specific municipal income is treated as exempt only when the fund's state matches the selected resident state. National and other-state municipal income remains state-taxable in this estimate. Confirm current state rules before relying on the comparison.
+
 Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, a top-level check timestamp, category, and government-obligation percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
 
 The tax letter is a PDF. The automated workflow installs `poppler-utils` and uses `pdftotext` to extract its table. To run this locally, install Poppler or another distribution that provides the `pdftotext` command before running:
