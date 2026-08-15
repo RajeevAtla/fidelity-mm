@@ -5,11 +5,20 @@ import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
-import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
+import { calculateAnnualValue, calculateBarWidth } from "./calculations";
 import { DataFreshness } from "./freshness";
 import { FundResults } from "./fund-results";
+import {
+  buildFunds,
+  calculateAfterTaxResults,
+  countFundsByCategory,
+  filterAndSortFunds,
+  getWidthRange,
+  getWinnerMatrix,
+  type CategoryFilter,
+} from "./fund-model";
 import type { CategoryCode } from "./app-config";
-import type { MinimumData, RateSheetData, RateSheetFund, TaxData } from "./data-contracts";
+import type { MinimumData, RateSheetData, TaxData } from "./data-contracts";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -64,83 +73,15 @@ export function applyThemeToDocument(theme: ResolvedTheme) {
   themeMeta.content = THEME_META_COLORS[theme];
 }
 
-type CategoryFilter = Category | "all";
-type Fund = {
-  t: string;
-  n: string;
-  y: number;
-  er: number;
-  c: Category;
-  se: number;
-  mn: string;
-};
-type FundResult = Fund & { a: number };
-const FUND_RULES = (fundTaxRules as TaxData).funds;
-
-const FUND_MINIMUMS = (fundMinimums as MinimumData).funds;
-
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
 const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
 const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
 
-function buildFunds(rateSheet: RateSheetData): Fund[] {
-  return rateSheet.funds
-    .filter((fund) => fund.symbol && fund.sevenDayYield !== null)
-    .map((fund) => {
-      const rule = FUND_RULES[fund.symbol ?? ""];
-      const minimum = FUND_MINIMUMS[fund.symbol ?? ""];
-      if (!rule) {
-        throw new Error(`Missing fund rule for ${fund.symbol ?? "unknown symbol"}`);
-      }
-      if (!minimum) {
-        throw new Error(`Missing minimum investment for ${fund.symbol ?? "unknown symbol"}`);
-      }
-
-      return {
-        t: fund.symbol ?? "",
-        n: displayName(fund),
-        y: fund.sevenDayYield ?? 0,
-        er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
-        c: rule.c,
-        se: rule.njExemptPct,
-        mn: minimum.minimumLabel,
-      };
-    });
-}
-
 const CL = APP_CONFIG.categories.labels;
 const isMuni = (category: Category) => APP_CONFIG.categories.municipal.includes(category);
 
-function displayName(fund: RateSheetFund) {
-  const sectionParts = (fund.section ?? "").split(":");
-  const classLabel = cleanLabel(sectionParts[sectionParts.length - 1] ?? "");
-  const name = cleanLabel(fund.name);
-  return classLabel && !name.toLowerCase().includes(classLabel.toLowerCase())
-    ? `${name} - ${classLabel}`
-    : name;
-}
-
-function cleanLabel(value: string) {
-  return value
-    .replace(/\s*\d+(?:,\d+)*,?\*?$/g, "")
-    .replace(/\s*\*+$/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 const rateSheet = allClassRates as RateSheetData;
-const F = buildFunds(rateSheet);
-
-function at(f: Fund, fr: number, nr: number) {
-  return calculateAfterTaxYield({
-    grossYield: f.y,
-    federalRate: fr,
-    stateRate: nr,
-    stateExemptPct: f.se,
-    category: f.c,
-  });
-}
 
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
@@ -232,6 +173,10 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
+  const funds = useMemo(
+    () => buildFunds(rateSheet, (fundTaxRules as TaxData).funds, (fundMinimums as MinimumData).funds),
+    [],
+  );
 
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
@@ -269,40 +214,17 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   }, [themeMode]);
 
   const res = useMemo(() => {
-    let l: FundResult[] = F.map((f) => ({ ...f, a: at(f, fr, nr) }));
-    if (fc !== "all") l = l.filter((f) => f.c === fc);
-    return l.sort((a, b) => b.a - a.a);
-  }, [fr, nr, fc]);
+    return filterAndSortFunds(calculateAfterTaxResults(funds, fr, nr), fc);
+  }, [funds, fr, nr, fc]);
 
-  const widthRange = useMemo(() => {
-    if (res.length === 0) {
-      return { min: 0, max: 0 };
-    }
-
-    return res.reduce(
-      (acc, fund) => ({
-        min: Math.min(acc.min, fund.a),
-        max: Math.max(acc.max, fund.a),
-      }),
-      { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
-    );
-  }, [res]);
+  const widthRange = useMemo(() => getWidthRange(res), [res]);
 
   const top = res[0];
-  const summary = useMemo(() => {
-    return fedB.map((fb) => ({
-      fb,
-      cols: stateB.map((nb) => {
-        const best = F.map((f) => ({ t: f.t, a: at(f, fb.r, nb.r), c: f.c })).sort(
-          (a, b) => b.a - a.a,
-        )[0];
-        return best;
-      }),
-    }));
-  }, []);
+  const summary = useMemo(() => getWinnerMatrix(funds, fedB, stateB), [funds]);
+  const categoryCounts = useMemo(() => countFundsByCategory(funds), [funds]);
 
   const filterCount = (category: CategoryFilter) =>
-    category === "all" ? "" : `(${F.filter((f) => f.c === category).length})`;
+    category === "all" ? "" : `(${categoryCounts[category] ?? 0})`;
 
   return (
     <div role="main" aria-labelledby="page-title" className="min-h-screen bg-page text-text font-body tabular-nums">
@@ -310,7 +232,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         <header className="mb-2.5 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 id="page-title" className="mb-[3px] font-display text-[18px] font-bold leading-[1.18] tracking-normal">
-              All {F.length} Fidelity Money Market Funds — After-Tax Yield
+              All {funds.length} Fidelity Money Market Funds — After-Tax Yield
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
