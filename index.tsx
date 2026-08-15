@@ -38,8 +38,6 @@ const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIn
 const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
 
 const CL = APP_CONFIG.categories.labels;
-const { rateSheet, minimumData, taxData } = parseAppData(allClassRates, fundMinimums, fundTaxRules);
-
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
@@ -132,9 +130,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
+  const { rateSheet, minimumData, taxData } = useMemo(
+    () => parseAppData(allClassRates, fundMinimums, fundTaxRules),
+    [],
+  );
   const funds = useMemo(
     () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
-    [],
+    [minimumData, rateSheet, taxData],
   );
 
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
