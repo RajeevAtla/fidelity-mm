@@ -15,4 +15,8 @@ describe("Fidelity tax category classification", () => {
   ] as const)("classifies %s as %s", (name, expected) => {
     expect(categoryFor(name)).toBe(expected);
   });
+
+  test("rejects an unknown fund name", () => {
+    expect(() => categoryFor("Unrecognized Portfolio")).toThrow("Unknown Fidelity tax fund category");
+  });
 });

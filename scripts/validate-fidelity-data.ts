@@ -98,7 +98,7 @@ for (const symbol of requiredSymbols) {
     if (rate?.name && tax.c !== categoryFor(rate.name)) {
       errors.push(symbol + ": category " + tax.c + " does not match fund name (expected " + categoryFor(rate.name) + ")");
     }
-    if (!finite(tax.njExemptPct) || tax.njExemptPct < 0 || tax.njExemptPct > 100) errors.push(symbol + ": invalid NJ exemption percentage");
+    if (!finite(tax.governmentExemptPct) || tax.governmentExemptPct < 0 || tax.governmentExemptPct > 100) errors.push(symbol + ": invalid government-obligation exemption percentage");
     if (!tax.sourceUrl) errors.push(symbol + ": incomplete tax provenance");
     if ("scrapedAt" in tax) errors.push(symbol + ": tax rule has a legacy per-fund scrapedAt");
   }
