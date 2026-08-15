@@ -104,7 +104,7 @@ The build output is written to `dist/`. It is safe to remove and regenerate this
 | `bun run preview` | Serves the production build for local inspection. |
 | `bun run scrape:fidelity` | Refreshes the yield and fund-class data file. |
 | `bun run scrape:fidelity-minimums` | Refreshes the minimum investment data file. |
-| `bun run scrape:fidelity-tax` | Refreshes tax categories and state-exempt percentages from Fidelity's annual tax letter. |
+| `bun run scrape:fidelity-tax` | Refreshes fund categories and government-obligation percentages from Fidelity's annual tax letter. |
 
 ## Data files
 
