@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
+import {
+  calculateAfterTaxYield,
+  calculateAnnualValue,
+  calculateBarWidth,
+  calculateStateExemptPct,
+} from "./calculations";
 
 describe("after-tax yield calculations", () => {
   test("applies federal and state tax to taxable income", () => {
@@ -30,6 +35,12 @@ describe("after-tax yield calculations", () => {
       stateExemptPct: 100,
       category: "nj",
     })).toBe(3);
+  });
+
+  test("uses the selected resident state for state municipal exemptions", () => {
+    expect(calculateStateExemptPct("ny", "ny", 0)).toBe(100);
+    expect(calculateStateExemptPct("ny", "nj", 0)).toBe(0);
+    expect(calculateStateExemptPct("wa", "g", 50.11)).toBe(50.11);
   });
 
   test("converts yield into annual dollars", () => {

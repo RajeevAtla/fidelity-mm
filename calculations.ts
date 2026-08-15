@@ -1,4 +1,11 @@
-export type CalculationCategory = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+import {
+  STATE_MUNICIPAL_CATEGORIES,
+  type CategoryCode,
+  type StateCode,
+  type StateMunicipalCategory,
+} from "./app-config";
+
+export type CalculationCategory = CategoryCode;
 
 export type AfterTaxInputs = {
   grossYield: number;
@@ -10,6 +17,17 @@ export type AfterTaxInputs = {
 
 export function isMunicipalCategory(category: CalculationCategory): boolean {
   return category === "nm" || category === "nj" || category === "ny" || category === "ca" || category === "ma";
+}
+
+export function calculateStateExemptPct(
+  state: StateCode,
+  category: CalculationCategory,
+  governmentExemptPct: number,
+): number {
+  if (STATE_MUNICIPAL_CATEGORIES.includes(category as StateMunicipalCategory)) {
+    return category === state ? 100 : 0;
+  }
+  return clampPercent(governmentExemptPct);
 }
 
 export function calculateAfterTaxYield({

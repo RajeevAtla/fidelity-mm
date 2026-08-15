@@ -53,7 +53,7 @@ export type MinimumData = CheckedDocument & {
 
 export type TaxRule = {
   c: CategoryCode;
-  njExemptPct: number;
+  governmentExemptPct: number;
   sourceUrl: string;
 };
 
