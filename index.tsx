@@ -17,61 +17,22 @@ import {
   getWinnerMatrix,
   type CategoryFilter,
 } from "./fund-model";
+import {
+  applyThemeToDocument,
+  getSystemThemePreference,
+  subscribeToSystemThemePreference,
+  writeStoredThemeMode,
+} from "./theme-browser";
+import { resolveThemeMode } from "./theme";
+import type { ResolvedTheme, ThemeMode } from "./theme";
 import type { CategoryCode } from "./app-config";
 import type { MinimumData, RateSheetData, TaxData } from "./data-contracts";
 
-export type ThemeMode = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
 export type Category = CategoryCode;
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
 const CURRENT_STATE = APP_CONFIG.states[APP_CONFIG.defaults.state];
-
-export function getStoredThemeMode(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    return "system";
-  }
-
-  return "system";
-}
-
-export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
-  if (mode === "light" || mode === "dark") {
-    return mode;
-  }
-
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    return "dark";
-  }
-
-  return "light";
-}
-
-export function applyThemeToDocument(theme: ResolvedTheme) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  document.documentElement.dataset.theme = theme;
-
-  let themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (!themeMeta) {
-    themeMeta = document.createElement("meta");
-    themeMeta.name = "theme-color";
-    document.head.appendChild(themeMeta);
-  }
-  themeMeta.content = THEME_META_COLORS[theme];
-}
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
@@ -168,7 +129,9 @@ function buttonClasses(active: boolean, tone?: string) {
 
 export default function App(props: { initialThemeMode: ThemeMode }) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => resolveThemeMode("system"));
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
+    resolveThemeMode("system", getSystemThemePreference()),
+  );
   const [fi, setFi] = useState(initialFederalBracketIndex);
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
@@ -183,34 +146,21 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   const nr = stateB[ni].r;
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-    } catch {
-      // Ignore storage failures.
-    }
+    writeStoredThemeMode(THEME_STORAGE_KEY, themeMode);
   }, [themeMode]);
 
   useEffect(() => {
-    applyThemeToDocument(resolvedTheme);
+    applyThemeToDocument(resolvedTheme, THEME_META_COLORS);
   }, [resolvedTheme]);
 
   useEffect(() => {
-    if (themeMode !== "system" || typeof window === "undefined") {
+    if (themeMode !== "system") {
       return;
     }
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setSystemTheme(media.matches ? "dark" : "light");
-
-    update();
-
-    if (media.addEventListener) {
-      media.addEventListener("change", update);
-      return () => media.removeEventListener("change", update);
-    }
-
-    media.addListener(update);
-    return () => media.removeListener(update);
+    return subscribeToSystemThemePreference((prefersDark) => {
+      setSystemTheme(resolveThemeMode("system", prefersDark));
+    });
   }, [themeMode]);
 
   const res = useMemo(() => {
@@ -238,7 +188,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
               Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
               For {CURRENT_STATE.abbreviation} residents.
             </p>
-            <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} />
+            <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} now={Date.now()} />
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
