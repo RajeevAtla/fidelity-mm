@@ -5,10 +5,15 @@ import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
-import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
+import {
+  calculateAfterTaxYield,
+  calculateAnnualValue,
+  calculateBarWidth,
+  calculateStateExemptPct,
+} from "./calculations";
 import { DataFreshness } from "./freshness";
 import { FundResults } from "./fund-results";
-import type { CategoryCode } from "./app-config";
+import { SUPPORTED_STATE_CODES, type CategoryCode, type StateCode } from "./app-config";
 import type { MinimumData, RateSheetData, RateSheetFund, TaxData } from "./data-contracts";
 
 export type ThemeMode = "light" | "dark" | "system";
@@ -17,8 +22,6 @@ export type Category = CategoryCode;
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
-const CURRENT_STATE = APP_CONFIG.states[APP_CONFIG.defaults.state];
-
 export function getStoredThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
     return "system";
@@ -71,7 +74,7 @@ type Fund = {
   y: number;
   er: number;
   c: Category;
-  se: number;
+  ge: number;
   mn: string;
 };
 type FundResult = Fund & { a: number };
@@ -80,9 +83,11 @@ const FUND_RULES = (fundTaxRules as TaxData).funds;
 const FUND_MINIMUMS = (fundMinimums as MinimumData).funds;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
-const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
 const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
-const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
+const initialStateBracketIndex = Math.min(
+  APP_CONFIG.defaults.stateBracketIndex,
+  Math.max(0, ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state].brackets.length - 1),
+);
 
 function buildFunds(rateSheet: RateSheetData): Fund[] {
   return rateSheet.funds
@@ -103,7 +108,7 @@ function buildFunds(rateSheet: RateSheetData): Fund[] {
         y: fund.sevenDayYield ?? 0,
         er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
         c: rule.c,
-        se: rule.njExemptPct,
+        ge: rule.governmentExemptPct,
         mn: minimum.minimumLabel,
       };
     });
@@ -132,12 +137,12 @@ function cleanLabel(value: string) {
 const rateSheet = allClassRates as RateSheetData;
 const F = buildFunds(rateSheet);
 
-function at(f: Fund, fr: number, nr: number) {
+function at(f: Fund, fr: number, nr: number, state: StateCode) {
   return calculateAfterTaxYield({
     grossYield: f.y,
     federalRate: fr,
     stateRate: nr,
-    stateExemptPct: f.se,
+    stateExemptPct: calculateStateExemptPct(state, f.c, f.ge),
     category: f.c,
   });
 }
@@ -228,14 +233,19 @@ function buttonClasses(active: boolean, tone?: string) {
 export default function App(props: { initialThemeMode: ThemeMode }) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => resolveThemeMode("system"));
+  const [state, setState] = useState<StateCode>(APP_CONFIG.defaults.state);
   const [fi, setFi] = useState(initialFederalBracketIndex);
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
 
+  const currentState = APP_CONFIG.states[state];
+  const stateConfig = ACTIVE_TAX_CONFIG.states[state];
+  const stateB = stateConfig.brackets.map(({ rate: r, label: l }) => ({ r, l }));
+  const stateBracketIndex = Math.min(ni, Math.max(0, stateB.length - 1));
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
-  const nr = stateB[ni].r;
+  const nr = stateB[stateBracketIndex]?.r ?? 0;
 
   useEffect(() => {
     try {
@@ -269,10 +279,10 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   }, [themeMode]);
 
   const res = useMemo(() => {
-    let l: FundResult[] = F.map((f) => ({ ...f, a: at(f, fr, nr) }));
+    let l: FundResult[] = F.map((f) => ({ ...f, a: at(f, fr, nr, state) }));
     if (fc !== "all") l = l.filter((f) => f.c === fc);
     return l.sort((a, b) => b.a - a.a);
-  }, [fr, nr, fc]);
+  }, [fr, nr, state, fc]);
 
   const widthRange = useMemo(() => {
     if (res.length === 0) {
@@ -293,13 +303,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     return fedB.map((fb) => ({
       fb,
       cols: stateB.map((nb) => {
-        const best = F.map((f) => ({ t: f.t, a: at(f, fb.r, nb.r), c: f.c })).sort(
+        const best = F.map((f) => ({ t: f.t, a: at(f, fb.r, nb.r, state), c: f.c })).sort(
           (a, b) => b.a - a.a,
         )[0];
         return best;
       }),
     }));
-  }, []);
+  }, [state]);
 
   const filterCount = (category: CategoryFilter) =>
     category === "all" ? "" : `(${F.filter((f) => f.c === category).length})`;
@@ -314,9 +324,27 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
-              For {CURRENT_STATE.abbreviation} residents.
+              For {currentState.abbreviation} residents.
             </p>
             <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} />
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm">
+            <label htmlFor="resident-state" className="px-1 text-[11px] font-bold text-subtle">Resident state</label>
+            <select
+              id="resident-state"
+              value={state}
+              onChange={(event) => {
+                const nextState = (event.currentTarget as HTMLSelectElement).value as StateCode;
+                setState(nextState);
+                setNi(Math.min(APP_CONFIG.defaults.stateBracketIndex, ACTIVE_TAX_CONFIG.states[nextState].brackets.length - 1));
+              }}
+              className="rounded border border-btn-border bg-btn-bg px-2 py-[5px] text-[11px] font-semibold text-btn-text"
+            >
+              {SUPPORTED_STATE_CODES.map((code) => (
+                <option key={code} value={code}>{APP_CONFIG.states[code].name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
@@ -338,6 +366,12 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </div>
           </div>
         </header>
+
+        {stateConfig.note && (
+          <p className="mb-3 rounded border border-warning-border bg-warning-bg px-2 py-1.5 text-[10px] leading-[1.4] text-warning-text" role="status">
+            {stateConfig.note}
+          </p>
+        )}
 
         <div className="mb-3 flex flex-wrap gap-4 sm:gap-5">
           <div className="min-w-0 flex-[1_1_280px]">
@@ -367,19 +401,19 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
           <div className="min-w-0 flex-[1_1_280px]">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="state-bracket" className="text-[12px] font-semibold text-text">{CURRENT_STATE.abbreviation} State Bracket</label>
+              <label htmlFor="state-bracket" className="text-[12px] font-semibold text-text">{currentState.abbreviation} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
-                {stateB[ni].l}
+                {stateB[stateBracketIndex].l}
               </span>
             </div>
             <input
               id="state-bracket"
               type="range"
-              aria-label={`${CURRENT_STATE.abbreviation} marginal tax bracket`}
-              aria-valuetext={stateB[ni].l}
+              aria-label={`${currentState.abbreviation} marginal tax bracket`}
+              aria-valuetext={stateB[stateBracketIndex].l}
               min={APP_CONFIG.defaults.minimumBracketIndex}
               max={stateB.length - 1}
-              value={ni}
+              value={stateBracketIndex}
               onInput={(e) => setNi(rangeValue(e))}
               className="w-full accent-state"
             />
@@ -494,13 +528,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           Winner at Every Bracket Combination
         </h2>
 
-        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label="Winner by federal and state tax bracket">
+        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label={`Winner by federal and ${currentState.abbreviation} tax bracket`}>
           <table className="min-w-[560px] w-full border-collapse text-[10px]">
-            <caption className="sr-only">Best after-tax fund for every federal and state tax bracket combination</caption>
+            <caption className="sr-only">Best after-tax fund for every federal and {currentState.name} tax bracket combination</caption>
             <thead>
               <tr>
                 <th scope="col" className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
-                  Fed↓ \ NJ→
+                  Fed↓ \ {currentState.abbreviation}→
                 </th>
                 {stateB.map((b) => (
                   <th
@@ -565,6 +599,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           ))}
           <br />
           Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER.
+          Tax allocation data: {fundTaxRules.taxYear}. Yields net of ER.
           Not financial advice.
         </div>
       </div>
