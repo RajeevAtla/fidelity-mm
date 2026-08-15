@@ -4,7 +4,8 @@ import minimumDataJson from "../data/fidelity-mm-minimums.json";
 import taxDataJson from "../data/fidelity-mm-tax-rules.json";
 import { validateData, type MinimumData, type RateData, type TaxData } from "./validate-fidelity-data";
 
-const now = Date.parse("2026-08-04T12:00:00.000Z");
+const now = Date.parse(rateDataJson.checkedAt);
+const staleNow = now + 6 * 86_400_000;
 
 function data() {
   return {
@@ -22,7 +23,7 @@ describe("Fidelity data validation", () => {
 
   test("reports stale rate data", () => {
     const { rate, minimum, tax } = data();
-    const errors = validateData(rate, minimum, tax, Date.parse("2026-08-15T12:00:00.000Z"));
+    const errors = validateData(rate, minimum, tax, staleNow);
     expect(errors).toContain("Rate sheet: checkedAt is more than five days old");
     expect(errors).toContain("Rate sheet: requestedPriceDate is more than five days old");
   });
