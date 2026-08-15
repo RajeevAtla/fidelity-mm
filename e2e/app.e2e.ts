@@ -24,3 +24,20 @@ test("core fund comparison controls work", async ({ page }) => {
   await expect(fundList.locator(":scope > div")).toHaveCount(40);
   await expect(page.getByRole("button", { name: /Show only the top/ })).toBeVisible();
 });
+
+test("resident state selection updates the tax profile", async ({ page }) => {
+  await page.goto("./");
+
+  const residentState = page.getByRole("combobox", { name: "Resident state" });
+  await expect(residentState.locator("option")).toHaveCount(42);
+  await residentState.selectOption("ny");
+  await expect(page.getByRole("slider", { name: "NY marginal tax bracket" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Winner by federal and NY tax bracket" })).toBeVisible();
+
+  await residentState.selectOption("wa");
+  await expect(page.getByRole("slider", { name: "WA marginal tax bracket" })).toHaveAttribute(
+    "aria-valuetext",
+    "0% · Ordinary income not taxed",
+  );
+  await expect(page.getByRole("status").filter({ hasText: "capital-gains" })).toBeVisible();
+});

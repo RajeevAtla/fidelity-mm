@@ -1,0 +1,31 @@
+import { describe, expect, test } from "bun:test";
+import { APP_CONFIG, SUPPORTED_STATE_CODES } from "./app-config";
+import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
+
+describe("state tax profiles", () => {
+  test("cover every supported resident state", () => {
+    expect(SUPPORTED_STATE_CODES).toHaveLength(42);
+    for (const state of SUPPORTED_STATE_CODES) {
+      const profile = ACTIVE_TAX_CONFIG.states[state];
+      expect(profile.source).toContain("state-income-tax-rates-2026");
+      expect(profile.brackets.length).toBeGreaterThan(0);
+      expect(APP_CONFIG.states[state].abbreviation).toHaveLength(2);
+    }
+  });
+
+  test("uses the active year and keeps bracket rates ordered", () => {
+    expect(ACTIVE_TAX_YEAR).toBe(2026);
+    for (const state of SUPPORTED_STATE_CODES) {
+      const rates = ACTIVE_TAX_CONFIG.states[state].brackets.map((bracket) => bracket.rate);
+      expect(rates.every((rate) => Number.isFinite(rate) && rate >= 0)).toBeTrue();
+      expect(rates).toEqual([...rates].sort((a, b) => a - b));
+    }
+  });
+
+  test("keeps Washington capital gains separate from ordinary income", () => {
+    const washington = ACTIVE_TAX_CONFIG.states.wa;
+    expect(washington.brackets).toEqual([{ rate: 0, label: "0% · Ordinary income not taxed" }]);
+    expect(washington.capitalGains?.map(({ rate }) => rate)).toEqual([7, 9]);
+    expect(washington.note).toContain("not applied to money-market yield income");
+  });
+});

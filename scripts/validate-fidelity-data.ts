@@ -1,5 +1,6 @@
 import { DATA_PATHS } from "../data-sources";
-import { APP_CONFIG } from "../app-config";
+import { APP_CONFIG, SUPPORTED_STATE_CODES } from "../app-config";
+import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "../tax-brackets";
 import type {
   MinimumData as MinimumDataContract,
   MinimumRule as MinimumRuleContract,
@@ -106,6 +107,15 @@ for (const symbol of requiredSymbols) {
 
 if (!Number.isInteger(taxData.taxYear) || (taxData.taxYear as number) < 2020) {
   errors.push("Tax data is missing a valid tax year");
+} else if ((taxData.taxYear as number) > ACTIVE_TAX_YEAR || ACTIVE_TAX_YEAR - (taxData.taxYear as number) > 1) {
+  errors.push(`Tax data year ${taxData.taxYear} is outside the supported ${ACTIVE_TAX_YEAR} allocation-data window`);
+}
+
+for (const state of SUPPORTED_STATE_CODES) {
+  const stateConfig = ACTIVE_TAX_CONFIG.states[state];
+  if (!stateConfig || stateConfig.brackets.length === 0) {
+    errors.push(`${state}: missing state tax brackets`);
+  }
 }
 
 console.log("Validated " + requiredSymbols.length + " funds, " + (minimumData.funds ? Object.keys(minimumData.funds).length : 0) + " minimum rules, and " + (taxData.funds ? Object.keys(taxData.funds).length : 0) + " tax rules.");
