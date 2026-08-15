@@ -9,6 +9,7 @@ import {
 describe("after-tax yield calculations", () => {
   test("applies federal and state tax to taxable income", () => {
     expect(calculateAfterTaxYield({
+      incomeType: "ordinary",
       grossYield: 5,
       federalRate: 24,
       stateRate: 6,
@@ -19,6 +20,7 @@ describe("after-tax yield calculations", () => {
 
   test("does not apply federal tax to municipal income", () => {
     expect(calculateAfterTaxYield({
+      incomeType: "ordinary",
       grossYield: 4,
       federalRate: 37,
       stateRate: 6,
@@ -29,6 +31,7 @@ describe("after-tax yield calculations", () => {
 
   test("fully state-exempt municipal income remains untaxed by the state", () => {
     expect(calculateAfterTaxYield({
+      incomeType: "ordinary",
       grossYield: 3,
       federalRate: 24,
       stateRate: 8,
@@ -40,6 +43,8 @@ describe("after-tax yield calculations", () => {
   test("uses the selected resident state for state municipal exemptions", () => {
     expect(calculateStateExemptPct("ny", "ny", 0)).toBe(100);
     expect(calculateStateExemptPct("ny", "nj", 0)).toBe(0);
+    expect(calculateStateExemptPct("ca", "ca", 0)).toBe(100);
+    expect(calculateStateExemptPct("ma", "ma", 0)).toBe(100);
     expect(calculateStateExemptPct("nm", "nm", 0)).toBe(0);
     expect(calculateStateExemptPct("wa", "g", 50.11)).toBe(50.11);
   });

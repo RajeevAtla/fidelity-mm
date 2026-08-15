@@ -140,6 +140,7 @@ const F = buildFunds(rateSheet);
 
 function at(f: Fund, fr: number, nr: number, state: StateCode) {
   return calculateAfterTaxYield({
+    incomeType: "ordinary",
     grossYield: f.y,
     federalRate: fr,
     stateRate: nr,

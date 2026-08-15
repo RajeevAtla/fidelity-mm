@@ -8,6 +8,7 @@ import {
 export type CalculationCategory = CategoryCode;
 
 export type AfterTaxInputs = {
+  incomeType: "ordinary";
   grossYield: number;
   federalRate: number;
   stateRate: number;
@@ -31,6 +32,7 @@ export function calculateStateExemptPct(
 }
 
 export function calculateAfterTaxYield({
+  incomeType: _incomeType,
   grossYield,
   federalRate,
   stateRate,

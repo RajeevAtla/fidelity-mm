@@ -30,9 +30,14 @@ test("resident state selection updates the tax profile", async ({ page }) => {
 
   const residentState = page.getByRole("combobox", { name: "Resident state" });
   await expect(residentState.locator("option")).toHaveCount(42);
+  await page.getByRole("button", { name: /Show all 40 funds/ }).click();
+
+  const njFundYield = await page.getByRole("img", { name: /FSKXX .*after-tax yield/ }).getAttribute("aria-label");
   await residentState.selectOption("ny");
   await expect(page.getByRole("slider", { name: "NY marginal tax bracket" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Winner by federal and NY tax bracket" })).toBeVisible();
+  const nyFundYield = await page.getByRole("img", { name: /FSKXX .*after-tax yield/ }).getAttribute("aria-label");
+  expect(nyFundYield).not.toBe(njFundYield);
 
   await residentState.selectOption("wa");
   await expect(page.getByRole("slider", { name: "WA marginal tax bracket" })).toHaveAttribute(

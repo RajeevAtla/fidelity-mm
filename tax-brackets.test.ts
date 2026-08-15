@@ -28,4 +28,12 @@ describe("state tax profiles", () => {
     expect(washington.capitalGains?.map(({ rate }) => rate)).toEqual([7, 9]);
     expect(washington.note).toContain("not applied to money-market yield income");
   });
+
+  test("captures current 2026 representative state schedules", () => {
+    expect(ACTIVE_TAX_CONFIG.states.nj.brackets[ACTIVE_TAX_CONFIG.states.nj.brackets.length - 1]?.rate).toBe(10.75);
+    expect(ACTIVE_TAX_CONFIG.states.ok.brackets.map(({ rate }) => rate)).toEqual([2.5, 3.5, 4.5]);
+    expect(ACTIVE_TAX_CONFIG.states.oh.brackets[0].rate).toBe(2.75);
+    expect(ACTIVE_TAX_CONFIG.states.sc.brackets[ACTIVE_TAX_CONFIG.states.sc.brackets.length - 1]?.rate).toBe(6.2);
+    expect(ACTIVE_TAX_CONFIG.states.sc.note).toContain("after June 30");
+  });
 });

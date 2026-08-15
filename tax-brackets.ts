@@ -90,7 +90,9 @@ export const TAX_YEARS: Record<number, TaxYearConfig> = {
       or: state(brackets([4.75, "$0"], [6.75, "$4.6K"], [8.75, "$11.4K"], [9.9, "$125K"])),
       pa: state(brackets([3.07, "$0"])),
       ri: state(brackets([3.75, "$0"], [4.75, "$82.1K"], [5.99, "$186.5K"])),
-      sc: state(brackets([0, "$0"], [3, "$3.6K"], [6, "$18.2K"])),
+      sc: state(brackets([0, "$0"], [3, "$3.6K"], [6.2, "$18.2K"]), {
+        note: "South Carolina's 2026 top rate is 6.2% after June 30; this profile uses the current rate.",
+      }),
       ut: state(brackets([4.5, "$0"])),
       vt: state(brackets([3.35, "$0"], [6.6, "$49.4K"], [7.6, "$119.7K"], [8.75, "$249.7K"])),
       va: state(brackets([2, "$0"], [3, "$3K"], [5, "$5K"], [5.75, "$17K"])),
