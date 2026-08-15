@@ -40,6 +40,7 @@ describe("after-tax yield calculations", () => {
   test("uses the selected resident state for state municipal exemptions", () => {
     expect(calculateStateExemptPct("ny", "ny", 0)).toBe(100);
     expect(calculateStateExemptPct("ny", "nj", 0)).toBe(0);
+    expect(calculateStateExemptPct("nm", "nm", 0)).toBe(0);
     expect(calculateStateExemptPct("wa", "g", 50.11)).toBe(50.11);
   });
 
