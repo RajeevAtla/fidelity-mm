@@ -78,7 +78,8 @@ type Fund = {
   mn: string;
 };
 type FundResult = Fund & { a: number };
-const FUND_RULES = (fundTaxRules as TaxData).funds;
+const TAX_DATA = fundTaxRules as TaxData;
+const FUND_RULES = TAX_DATA.funds;
 
 const FUND_MINIMUMS = (fundMinimums as MinimumData).funds;
 
@@ -598,8 +599,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </span>
           ))}
           <br />
-          Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER.
-          Tax allocation data: {fundTaxRules.taxYear}. Yields net of ER.
+          Yellow border = current selection. State exemption %s approximate & vary yearly. Tax allocation data: {TAX_DATA.taxYear}. Yields net of ER.
           Not financial advice.
         </div>
       </div>

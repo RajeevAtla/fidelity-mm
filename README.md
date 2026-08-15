@@ -10,7 +10,7 @@ The project is built as a static web application. Fund data is stored in the rep
 - Current yield data for available fund classes.
 - Minimum investment requirements for each fund.
 - Tax-equivalent yield calculations based on filing status and income.
-- Federal tax bracket selection and estimated after-tax yield comparisons.
+- Federal and resident-state tax bracket selection with estimated after-tax yield comparisons.
 - Search, filtering, sorting, and fund-category controls.
 - Light and dark display themes.
 - Responsive layouts for desktop, tablet, and mobile screens.
@@ -36,10 +36,10 @@ The figures shown in the application are informational comparisons. They are not
 | `main.tsx` | Browser entry point that mounts the application. |
 | `styles.css` | Source styles, theme variables, layout rules, and responsive behavior. |
 | `bar-widths.ts` | Shared calculations used to size and scale comparison bars. |
-| `tax-brackets.ts` | Federal tax bracket data and tax-year configuration. |
+| `tax-brackets.ts` | Federal and state tax bracket data and tax-year configuration. |
 | `data/fidelity-mm-allclass.json` | Yield and fund-class data used by the application. |
 | `data/fidelity-mm-minimums.json` | Minimum investment values, source links, and a top-level check timestamp. |
-| `data/fidelity-mm-tax-rules.json` | Tax-year-specific fund categories and state-exempt percentages. |
+| `data/fidelity-mm-tax-rules.json` | Tax-year-specific fund categories and government-obligation exemption percentages. |
 | `scripts/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
 | `scripts/scrape-fidelity-mm-minimums.ts` | Uses Fidelity fund numbers to refresh minimum investment data. |
 | `scripts/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
@@ -178,7 +178,7 @@ A successful refresh triggers the deployment workflow after its data commit reac
 
 ## Tax calculations
 
-Federal tax brackets are maintained in `tax-brackets.ts`. The file includes the active tax year and bracket thresholds for each supported filing status. Keep the tax year and all bracket values together so a future update can be made in one place.
+Federal and state tax brackets are maintained in `tax-brackets.ts`. The application uses single-filer marginal-rate selections rather than calculating a complete tax return. Washington is included as a zero ordinary-income-tax state; its separate capital-gains tax is not applied to money-market yield income. Keep the tax year and all bracket values together so a future update can be made in one place.
 
 When updating tax rules:
 
@@ -189,13 +189,13 @@ When updating tax rules:
 5. Review the displayed tax-equivalent yield and after-tax values in both themes.
 6. Build the application before committing.
 
-Tax calculations are estimates based on the selected federal brackets. State and local taxes, deductions, credits, account type, and individual circumstances are outside the scope of the comparison.
+Tax calculations are estimates based on the selected federal and resident-state marginal brackets. Local taxes, deductions, credits, account type, capital-gains scenarios, and individual circumstances are outside the scope of the comparison.
 
 ## Tax-exemption data
 
-The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a category and New Jersey state-exempt percentage.
+The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a fund category and government-obligation exemption percentage. The selected resident state determines the treatment of the available state-specific municipal fund categories.
 
-Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, a top-level check timestamp, category, and percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
+Fidelity publishes these percentages by tax year. The file records the tax year, source PDF, a top-level check timestamp, category, and government-obligation percentage for every fund symbol. Institutional share classes that belong to the same underlying portfolio receive the portfolio percentage from the annual letter.
 
 The tax letter is a PDF. The automated workflow installs `poppler-utils` and uses `pdftotext` to extract its table. To run this locally, install Poppler or another distribution that provides the `pdftotext` command before running:
 
