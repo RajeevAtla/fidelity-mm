@@ -1,8 +1,10 @@
 import "./tailwind.generated.css";
 import { Component, type ComponentChildren, render } from "preact";
-import App, { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./index";
+import App from "./index";
 import { ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
+import { applyThemeToDocument, getSystemThemePreference, readStoredThemeMode } from "./theme-browser";
+import { resolveThemeMode } from "./theme";
 
 type ModelContextDocument = Document & {
   modelContext?: {
@@ -48,8 +50,11 @@ async function registerAgentTools() {
   });
 }
 
-const initialThemeMode = getStoredThemeMode();
-applyThemeToDocument(resolveThemeMode(initialThemeMode));
+const initialThemeMode = readStoredThemeMode(APP_CONFIG.theme.storageKey);
+applyThemeToDocument(
+  resolveThemeMode(initialThemeMode, getSystemThemePreference()),
+  APP_CONFIG.theme.metaColors,
+);
 
 render(<ErrorBoundary><App initialThemeMode={initialThemeMode} /></ErrorBoundary>, document.getElementById("root")!);
 void registerAgentTools();

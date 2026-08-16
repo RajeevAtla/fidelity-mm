@@ -1,4 +1,4 @@
-export type CategoryCode = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+import { CATEGORY_CODES, MUNICIPAL_CATEGORIES, type CategoryCode } from "./categories";
 
 export const APP_CONFIG = {
   site: {
@@ -33,7 +33,7 @@ export const APP_CONFIG = {
     },
   },
   categories: {
-    order: ["p", "g", "t", "nm", "nj", "ny", "ca", "ma"] as CategoryCode[],
+    order: CATEGORY_CODES,
     labels: {
       p: "Prime",
       g: "Government",
@@ -44,6 +44,6 @@ export const APP_CONFIG = {
       ca: "CA Muni",
       ma: "MA Muni",
     } satisfies Record<CategoryCode, string>,
-    municipal: ["nm", "nj", "ny", "ca", "ma"] as CategoryCode[],
+    municipal: MUNICIPAL_CATEGORIES,
   },
 } as const;

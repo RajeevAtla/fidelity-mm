@@ -1,16 +1,14 @@
-export type CalculationCategory = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+import { isMunicipalCategory, type CategoryCode } from "./categories";
+
+export { isMunicipalCategory } from "./categories";
 
 export type AfterTaxInputs = {
   grossYield: number;
   federalRate: number;
   stateRate: number;
   stateExemptPct: number;
-  category: CalculationCategory;
+  category: CategoryCode;
 };
-
-export function isMunicipalCategory(category: CalculationCategory): boolean {
-  return category === "nm" || category === "nj" || category === "ny" || category === "ca" || category === "ma";
-}
 
 export function calculateAfterTaxYield({
   grossYield,

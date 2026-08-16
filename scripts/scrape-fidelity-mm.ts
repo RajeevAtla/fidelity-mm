@@ -1,4 +1,4 @@
-import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
+import { FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
 import type { RateSheetData, RateSheetFund } from "../data-contracts";
 import { fetchWithRetry } from "../fetch-utils";
 
@@ -13,7 +13,7 @@ const TAB_TO_GROUP = {
 
 type TabName = keyof typeof TAB_TO_GROUP;
 
-type FidelityRateSheet = {
+export type FidelityRateSheet = {
   sheetTitle?: string;
   dateType?: string;
   complete?: boolean;
@@ -50,36 +50,36 @@ type FidelityFund = {
   }>;
 };
 
-const tab = readTab();
-const outIndex = process.argv.indexOf("--out");
-const outPath = outIndex >= 0 ? process.argv[outIndex + 1] : undefined;
+export async function main(args: readonly string[] = process.argv.slice(2)): Promise<void> {
+  const tab = readTab(args);
+  const outIndex = args.indexOf("--out");
+  const outPath = outIndex >= 0 ? args[outIndex + 1] : undefined;
 
-if (process.argv.includes("--help") || process.argv.includes("-h")) {
-  console.log(`Usage: bun scripts/scrape-fidelity-mm.ts [--tab allClass|direct|shortTerm] [--out path]
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(`Usage: bun scripts/scrape-fidelity-mm.ts [--tab allClass|direct|shortTerm] [--out path]
 
 Fetches Fidelity institutional daily rate sheets from ${PAGE_URL} and prints JSON.
 Use --out to also write the JSON to a file.`);
-  process.exit(0);
-}
+    return;
+  }
 
-const groupSystemName = TAB_TO_GROUP[tab];
-const apiUrl = `${DATA_URL}?groupSystemName=${encodeURIComponent(groupSystemName)}`;
-const response = await fetchWithRetry(apiUrl, {
-  headers: {
-    accept: "application/json,text/plain,*/*",
-    referer: PAGE_URL,
-    "user-agent":
-      SCRAPER_USER_AGENT,
-  },
-});
+  const groupSystemName = TAB_TO_GROUP[tab];
+  const apiUrl = `${DATA_URL}?groupSystemName=${encodeURIComponent(groupSystemName)}`;
+  const response = await fetchWithRetry(apiUrl, {
+    headers: {
+      accept: "application/json,text/plain,*/*",
+      referer: PAGE_URL,
+      "user-agent": SCRAPER_USER_AGENT,
+    },
+  });
 
-if (!response.ok) {
-  throw new Error(`Fidelity returned ${response.status} ${response.statusText}`);
-}
+  if (!response.ok) {
+    throw new Error(`Fidelity returned ${response.status} ${response.statusText}`);
+  }
 
-const rateSheet = (await response.json()) as FidelityRateSheet;
-const funds = normalizeRateSheet(rateSheet);
-const output: RateSheetData = {
+  const rateSheet = (await response.json()) as FidelityRateSheet;
+  const funds = normalizeRateSheet(rateSheet);
+  const output: RateSheetData = {
     sourceUrl: PAGE_URL,
     apiUrl,
     checkedAt: new Date().toISOString(),
@@ -91,18 +91,19 @@ const output: RateSheetData = {
     requestedPriceDate: rateSheet.requestedPriceDate ?? null,
     count: funds.length,
     funds,
-};
-const json = `${JSON.stringify(output, null, 2)}\n`;
+  };
+  const json = `${JSON.stringify(output, null, 2)}\n`;
 
-if (outPath) {
-  await Bun.write(outPath, json);
+  if (outPath) {
+    await Bun.write(outPath, json);
+  }
+
+  console.log(json);
 }
 
-console.log(json);
-
-function readTab(): TabName {
-  const tabIndex = process.argv.indexOf("--tab");
-  const value = tabIndex >= 0 ? process.argv[tabIndex + 1] : "allClass";
+export function readTab(args: readonly string[]): TabName {
+  const tabIndex = args.indexOf("--tab");
+  const value = tabIndex >= 0 ? args[tabIndex + 1] : "allClass";
 
   if (value === "allClass" || value === "direct" || value === "shortTerm") {
     return value;
@@ -111,7 +112,7 @@ function readTab(): TabName {
   throw new Error(`Invalid --tab "${value}". Expected allClass, direct, or shortTerm.`);
 }
 
-function normalizeRateSheet(rateSheet: FidelityRateSheet): RateSheetFund[] {
+export function normalizeRateSheet(rateSheet: FidelityRateSheet): RateSheetFund[] {
   const funds: RateSheetFund[] = [];
   const primaryDate = rateSheet.milrateYieldDates?.[0] ?? null;
 
@@ -149,7 +150,7 @@ function normalizeRateSheet(rateSheet: FidelityRateSheet): RateSheetFund[] {
   return funds;
 }
 
-function parseNumber(value: string | number | null | undefined): number | null {
+export function parseNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === "") {
     return null;
   }
@@ -177,4 +178,8 @@ function decodeEntities(value: string): string {
     .replace(/&gt;|&#62;/gi, ">")
     .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, decimal: string) => String.fromCodePoint(Number.parseInt(decimal, 10)));
+}
+
+if (import.meta.main) {
+  await main();
 }

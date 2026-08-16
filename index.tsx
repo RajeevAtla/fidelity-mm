@@ -3,145 +3,41 @@ import allClassRates from "./data/fidelity-mm-allclass.json";
 import fundMinimums from "./data/fidelity-mm-minimums.json";
 import fundTaxRules from "./data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "./bar-widths";
+import { parseAppData } from "./data-boundary";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG } from "./app-config";
-import { calculateAfterTaxYield, calculateAnnualValue, calculateBarWidth } from "./calculations";
+import { calculateAnnualValue, calculateBarWidth } from "./calculations";
 import { DataFreshness } from "./freshness";
 import { FundResults } from "./fund-results";
-import type { CategoryCode } from "./app-config";
-import type { MinimumData, RateSheetData, RateSheetFund, TaxData } from "./data-contracts";
-
-export type ThemeMode = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
-export type Category = CategoryCode;
+import {
+  buildFunds,
+  calculateAfterTaxResults,
+  countFundsByCategory,
+  filterAndSortFunds,
+  getWidthRange,
+  getWinnerMatrix,
+  type CategoryFilter,
+} from "./fund-model";
+import {
+  applyThemeToDocument,
+  getSystemThemePreference,
+  subscribeToSystemThemePreference,
+  writeStoredThemeMode,
+} from "./theme-browser";
+import { resolveThemeMode } from "./theme";
+import type { ResolvedTheme, ThemeMode } from "./theme";
+import type { CategoryCode } from "./categories";
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
 const CURRENT_STATE = APP_CONFIG.states[APP_CONFIG.defaults.state];
-
-export function getStoredThemeMode(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    return "system";
-  }
-
-  return "system";
-}
-
-export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
-  if (mode === "light" || mode === "dark") {
-    return mode;
-  }
-
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    return "dark";
-  }
-
-  return "light";
-}
-
-export function applyThemeToDocument(theme: ResolvedTheme) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  document.documentElement.dataset.theme = theme;
-
-  let themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (!themeMeta) {
-    themeMeta = document.createElement("meta");
-    themeMeta.name = "theme-color";
-    document.head.appendChild(themeMeta);
-  }
-  themeMeta.content = THEME_META_COLORS[theme];
-}
-
-type CategoryFilter = Category | "all";
-type Fund = {
-  t: string;
-  n: string;
-  y: number;
-  er: number;
-  c: Category;
-  se: number;
-  mn: string;
-};
-type FundResult = Fund & { a: number };
-const FUND_RULES = (fundTaxRules as TaxData).funds;
-
-const FUND_MINIMUMS = (fundMinimums as MinimumData).funds;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
 const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
 const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
 const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
 
-function buildFunds(rateSheet: RateSheetData): Fund[] {
-  return rateSheet.funds
-    .filter((fund) => fund.symbol && fund.sevenDayYield !== null)
-    .map((fund) => {
-      const rule = FUND_RULES[fund.symbol ?? ""];
-      const minimum = FUND_MINIMUMS[fund.symbol ?? ""];
-      if (!rule) {
-        throw new Error(`Missing fund rule for ${fund.symbol ?? "unknown symbol"}`);
-      }
-      if (!minimum) {
-        throw new Error(`Missing minimum investment for ${fund.symbol ?? "unknown symbol"}`);
-      }
-
-      return {
-        t: fund.symbol ?? "",
-        n: displayName(fund),
-        y: fund.sevenDayYield ?? 0,
-        er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
-        c: rule.c,
-        se: rule.njExemptPct,
-        mn: minimum.minimumLabel,
-      };
-    });
-}
-
 const CL = APP_CONFIG.categories.labels;
-const isMuni = (category: Category) => APP_CONFIG.categories.municipal.includes(category);
-
-function displayName(fund: RateSheetFund) {
-  const sectionParts = (fund.section ?? "").split(":");
-  const classLabel = cleanLabel(sectionParts[sectionParts.length - 1] ?? "");
-  const name = cleanLabel(fund.name);
-  return classLabel && !name.toLowerCase().includes(classLabel.toLowerCase())
-    ? `${name} - ${classLabel}`
-    : name;
-}
-
-function cleanLabel(value: string) {
-  return value
-    .replace(/\s*\d+(?:,\d+)*,?\*?$/g, "")
-    .replace(/\s*\*+$/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-const rateSheet = allClassRates as RateSheetData;
-const F = buildFunds(rateSheet);
-
-function at(f: Fund, fr: number, nr: number) {
-  return calculateAfterTaxYield({
-    grossYield: f.y,
-    federalRate: fr,
-    stateRate: nr,
-    stateExemptPct: f.se,
-    category: f.c,
-  });
-}
-
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
 const rangeValue = (event: Event) => Number((event.currentTarget as HTMLInputElement).value);
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
@@ -150,7 +46,7 @@ const buttonBase =
   "inline-flex items-center rounded-md border px-2 py-[5px] text-[10px] font-medium leading-none transition-colors";
 const neutralButtonClasses =
   "border-btn-border bg-btn-bg text-btn-text data-[active=true]:border-border-strong data-[active=true]:bg-btn-active-bg data-[active=true]:text-btn-active-text";
-const categoryButtonVariants: Record<Category, string> = {
+const categoryButtonVariants: Record<CategoryCode, string> = {
   p: "data-[active=true]:border-cat-p-border data-[active=true]:bg-cat-p-fill data-[active=true]:text-cat-p-text",
   g: "data-[active=true]:border-cat-g-border data-[active=true]:bg-cat-g-fill data-[active=true]:text-cat-g-text",
   t: "data-[active=true]:border-cat-t-border data-[active=true]:bg-cat-t-fill data-[active=true]:text-cat-t-text",
@@ -160,7 +56,7 @@ const categoryButtonVariants: Record<Category, string> = {
   ca: "data-[active=true]:border-cat-ca-border data-[active=true]:bg-cat-ca-fill data-[active=true]:text-cat-ca-text",
   ma: "data-[active=true]:border-cat-ma-border data-[active=true]:bg-cat-ma-fill data-[active=true]:text-cat-ma-text",
 };
-const categoryFillClasses: Record<Category, string> = {
+const categoryFillClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-fill",
   g: "bg-cat-g-fill",
   t: "bg-cat-t-fill",
@@ -170,7 +66,7 @@ const categoryFillClasses: Record<Category, string> = {
   ca: "bg-cat-ca-fill",
   ma: "bg-cat-ma-fill",
 };
-const categoryCellClasses: Record<Category, string> = {
+const categoryCellClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-soft text-cat-p-text",
   g: "bg-cat-g-soft text-cat-g-text",
   t: "bg-cat-t-soft text-cat-t-text",
@@ -180,7 +76,7 @@ const categoryCellClasses: Record<Category, string> = {
   ca: "bg-cat-ca-soft text-cat-ca-text",
   ma: "bg-cat-ma-soft text-cat-ma-text",
 };
-const categoryCellTextClasses: Record<Category, string> = {
+const categoryCellTextClasses: Record<CategoryCode, string> = {
   p: "text-cat-p-text",
   g: "text-cat-g-text",
   t: "text-cat-t-text",
@@ -190,7 +86,7 @@ const categoryCellTextClasses: Record<Category, string> = {
   ca: "text-cat-ca-text",
   ma: "text-cat-ma-text",
 };
-const categoryLegendClasses: Record<Category, string> = {
+const categoryLegendClasses: Record<CategoryCode, string> = {
   p: "bg-cat-p-soft text-cat-p-text border-cat-p-border",
   g: "bg-cat-g-soft text-cat-g-text border-cat-g-border",
   t: "bg-cat-t-soft text-cat-t-text border-cat-t-border",
@@ -227,82 +123,56 @@ function buttonClasses(active: boolean, tone?: string) {
 
 export default function App(props: { initialThemeMode: ThemeMode }) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => resolveThemeMode("system"));
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
+    resolveThemeMode("system", getSystemThemePreference()),
+  );
   const [fi, setFi] = useState(initialFederalBracketIndex);
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
+  const { rateSheet, minimumData, taxData } = useMemo(
+    () => parseAppData(allClassRates, fundMinimums, fundTaxRules),
+    [],
+  );
+  const funds = useMemo(
+    () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
+    [minimumData, rateSheet, taxData],
+  );
 
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
   const nr = stateB[ni].r;
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-    } catch {
-      // Ignore storage failures.
-    }
+    writeStoredThemeMode(THEME_STORAGE_KEY, themeMode);
   }, [themeMode]);
 
   useEffect(() => {
-    applyThemeToDocument(resolvedTheme);
+    applyThemeToDocument(resolvedTheme, THEME_META_COLORS);
   }, [resolvedTheme]);
 
   useEffect(() => {
-    if (themeMode !== "system" || typeof window === "undefined") {
+    if (themeMode !== "system") {
       return;
     }
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setSystemTheme(media.matches ? "dark" : "light");
-
-    update();
-
-    if (media.addEventListener) {
-      media.addEventListener("change", update);
-      return () => media.removeEventListener("change", update);
-    }
-
-    media.addListener(update);
-    return () => media.removeListener(update);
+    return subscribeToSystemThemePreference((prefersDark) => {
+      setSystemTheme(resolveThemeMode("system", prefersDark));
+    });
   }, [themeMode]);
 
   const res = useMemo(() => {
-    let l: FundResult[] = F.map((f) => ({ ...f, a: at(f, fr, nr) }));
-    if (fc !== "all") l = l.filter((f) => f.c === fc);
-    return l.sort((a, b) => b.a - a.a);
-  }, [fr, nr, fc]);
+    return filterAndSortFunds(calculateAfterTaxResults(funds, fr, nr), fc);
+  }, [funds, fr, nr, fc]);
 
-  const widthRange = useMemo(() => {
-    if (res.length === 0) {
-      return { min: 0, max: 0 };
-    }
-
-    return res.reduce(
-      (acc, fund) => ({
-        min: Math.min(acc.min, fund.a),
-        max: Math.max(acc.max, fund.a),
-      }),
-      { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
-    );
-  }, [res]);
+  const widthRange = useMemo(() => getWidthRange(res), [res]);
 
   const top = res[0];
-  const summary = useMemo(() => {
-    return fedB.map((fb) => ({
-      fb,
-      cols: stateB.map((nb) => {
-        const best = F.map((f) => ({ t: f.t, a: at(f, fb.r, nb.r), c: f.c })).sort(
-          (a, b) => b.a - a.a,
-        )[0];
-        return best;
-      }),
-    }));
-  }, []);
+  const summary = useMemo(() => getWinnerMatrix(funds, fedB, stateB), [funds]);
+  const categoryCounts = useMemo(() => countFundsByCategory(funds), [funds]);
 
   const filterCount = (category: CategoryFilter) =>
-    category === "all" ? "" : `(${F.filter((f) => f.c === category).length})`;
+    category === "all" ? "" : `(${categoryCounts[category] ?? 0})`;
 
   return (
     <div role="main" aria-labelledby="page-title" className="min-h-screen bg-page text-text font-body tabular-nums">
@@ -310,13 +180,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
         <header className="mb-2.5 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 id="page-title" className="mb-[3px] font-display text-[18px] font-bold leading-[1.18] tracking-normal">
-              All {F.length} Fidelity Money Market Funds — After-Tax Yield
+              All {funds.length} Fidelity Money Market Funds — After-Tax Yield
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
               For {CURRENT_STATE.abbreviation} residents.
             </p>
-            <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} />
+            <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} now={Date.now()} />
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
@@ -552,7 +422,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
         <div className="mt-2.5 text-[9px] leading-[1.5] text-subtle">
           <strong className="text-text">Legend:</strong>{" "}
-          {(Object.entries(CL) as [Category, string][]).map(([k, v]) => (
+          {(Object.entries(CL) as [CategoryCode, string][]).map(([k, v]) => (
             <span
               key={k}
               className={cx(
