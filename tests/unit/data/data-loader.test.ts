@@ -69,6 +69,41 @@ describe("application data loader", () => {
     ).rejects.toThrow("Could not load data/fidelity-mm-allclass.json: network request failed");
   });
 
+  test("retries a failed batch with a fresh three-request batch", async () => {
+    let failRateSheet = true;
+    const calls: string[] = [];
+    const fetcher: DataFetcher = async (input) => {
+      const url = new URL(String(input));
+      calls.push(url.pathname);
+      if (failRateSheet && url.pathname.endsWith("allclass.json")) {
+        throw new Error("offline");
+      }
+      const body = url.pathname.endsWith("allclass.json")
+        ? rateDataJson
+        : url.pathname.endsWith("minimums.json")
+          ? minimumDataJson
+          : taxDataJson;
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+
+    await expect(
+      loadAppData({ baseUrl: "https://example.test/retry/", fetch: fetcher }),
+    ).rejects.toThrow("Could not load data/fidelity-mm-allclass.json: network request failed");
+
+    failRateSheet = false;
+    const data = await loadAppData({ baseUrl: "https://example.test/retry/", fetch: fetcher });
+
+    expect(data.rateSheet.funds).toHaveLength(40);
+    expect(calls).toEqual([
+      "/retry/data/fidelity-mm-allclass.json",
+      "/retry/data/fidelity-mm-minimums.json",
+      "/retry/data/fidelity-mm-tax-rules.json",
+      "/retry/data/fidelity-mm-allclass.json",
+      "/retry/data/fidelity-mm-minimums.json",
+      "/retry/data/fidelity-mm-tax-rules.json",
+    ]);
+  });
+
   test("surfaces malformed fetched documents through the data boundary", async () => {
     const fetcher: DataFetcher = async (input) => {
       const url = new URL(String(input));
