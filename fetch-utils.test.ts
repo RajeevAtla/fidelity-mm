@@ -136,4 +136,54 @@ describe("fetchWithRetry", () => {
     expect(outcome).toBeInstanceOf(DOMException);
     expect(attempts).toBe(1);
   });
+
+  test("clears the default backoff timer when the caller aborts", async () => {
+    const controller = new AbortController();
+    const timers: Array<{ handle: number; milliseconds: number }> = [];
+    const cleared: unknown[] = [];
+    let releaseBackoff!: () => void;
+    const backoffStarted = new Promise<void>((resolve) => {
+      releaseBackoff = resolve;
+    });
+    let fallbackTimer!: ReturnType<typeof setTimeout>;
+    const clock: FetchRetryClock = {
+      setTimeout: (callback, milliseconds) => {
+        const handle = timers.length + 1;
+        timers.push({ handle, milliseconds });
+        if (milliseconds === 200) releaseBackoff();
+        return handle;
+      },
+      clearTimeout: (handle) => cleared.push(handle),
+    };
+
+    const request = fetchWithRetry(
+      "https://example.test/data",
+      { retries: 1, retryDelayMs: 200, signal: controller.signal },
+      {
+        clock,
+        fetch: async () => new Response("busy", { status: 503 }),
+      },
+    ).then(
+      () => "completed" as const,
+      (error) => error,
+    );
+
+    const started = await Promise.race([
+      backoffStarted.then(() => true),
+      new Promise<boolean>((resolve) => {
+        fallbackTimer = setTimeout(() => resolve(false), 25);
+      }),
+    ]);
+    clearTimeout(fallbackTimer);
+    controller.abort();
+    const outcome = await request;
+
+    expect(started).toBe(true);
+    expect(outcome).toBeInstanceOf(DOMException);
+    expect(timers).toEqual([
+      { handle: 1, milliseconds: 20_000 },
+      { handle: 2, milliseconds: 200 },
+    ]);
+    expect(cleared).toEqual([2, 1]);
+  });
 });
