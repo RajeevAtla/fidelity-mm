@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import allClassRates from "../../data/fidelity-mm-allclass.json";
-import fundMinimums from "../../data/fidelity-mm-minimums.json";
-import fundTaxRules from "../../data/fidelity-mm-tax-rules.json";
 import { BAR_WIDTH_CLASSES } from "../domain/bar-widths";
-import { parseAppData } from "../data/data-boundary";
+import type { AppData } from "../data/data-boundary";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "../domain/tax-brackets";
 import { APP_CONFIG } from "../config/app-config";
 import { calculateAnnualValue, calculateBarWidth } from "../domain/calculations";
@@ -124,6 +121,7 @@ function buttonClasses(active: boolean, tone?: string) {
 }
 
 export default function App(props: {
+  data: AppData;
   initialThemeMode: ThemeMode;
   onResidentStateChange?: (state: StateCode) => void;
 }) {
@@ -136,10 +134,7 @@ export default function App(props: {
   const [ni, setNi] = useState(initialStateBracketIndex);
   const [fc, setFc] = useState<CategoryFilter>("all");
   const [showAll, setShowAll] = useState(false);
-  const { rateSheet, minimumData, taxData } = useMemo(
-    () => parseAppData(allClassRates, fundMinimums, fundTaxRules),
-    [],
-  );
+  const { rateSheet, minimumData, taxData } = props.data;
   const funds = useMemo(
     () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
     [minimumData, rateSheet, taxData],

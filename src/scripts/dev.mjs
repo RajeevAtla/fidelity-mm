@@ -1,4 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
+import { copyStaticData } from "./copy-static-data.ts";
+
+await copyStaticData();
 
 const tailwindArgs = ["tailwindcss", "-i", "./src/styles/styles.css", "-o", "./src/styles/tailwind.generated.css"];
 

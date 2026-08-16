@@ -1,8 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 test("core fund comparison controls work", async ({ page }) => {
+  const dataRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/fidelity-mm/data/")) dataRequests.push(new URL(request.url()).pathname);
+  });
+
   await page.goto("./");
   await expect(page.getByRole("heading", { name: /All 40 Fidelity Money Market Funds/ })).toBeVisible();
+  expect(dataRequests.sort()).toEqual([
+    "/fidelity-mm/data/fidelity-mm-allclass.json",
+    "/fidelity-mm/data/fidelity-mm-minimums.json",
+    "/fidelity-mm/data/fidelity-mm-tax-rules.json",
+  ]);
 
   const fundList = page.locator("#fund-list");
   await expect(fundList.locator(":scope > div")).toHaveCount(15);
@@ -51,4 +61,27 @@ test("resident state selection updates the tax profile", async ({ page }) => {
     "0% · Ordinary income not taxed",
   );
   await expect(page.getByRole("status").filter({ hasText: "capital-gains" })).toBeVisible();
+});
+
+test("shows the data error screen when a data request fails", async ({ page }) => {
+  await page.route("**/fidelity-mm/data/fidelity-mm-allclass.json", (route) => route.abort("failed"));
+
+  await page.goto("./");
+
+  await expect(page.getByRole("heading", { name: "Fidelity data is temporarily unavailable" })).toBeVisible();
+  await expect(page.getByText("The page could not load its generated fund data.")).toBeVisible();
+});
+
+test("shows the data error screen when a fetched document is malformed", async ({ page }) => {
+  await page.route("**/fidelity-mm/data/fidelity-mm-minimums.json", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ invalid: true }),
+    }),
+  );
+
+  await page.goto("./");
+
+  await expect(page.getByRole("heading", { name: "Fidelity data is temporarily unavailable" })).toBeVisible();
 });

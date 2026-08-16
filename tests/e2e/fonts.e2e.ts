@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("visible typefaces load from WOFF2", async ({ page }) => {
   await page.goto("./");
+  await expect(page.getByRole("heading", { name: /All 40 Fidelity Money Market Funds/ })).toBeVisible();
 
   const fontState = await page.evaluate(async () => {
     await document.fonts.ready;
