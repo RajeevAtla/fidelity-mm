@@ -109,3 +109,69 @@ Eight files overlap TASK-005. Conflict resolution must retain pure module and ru
 - 2026-08-16: Terra independently verified all fixes, resolved all four threads, passed focused/full/build/E2E checks, and approved TASK-004.
 - 2026-08-16: PR #4 merged into main as c7ae8c6e28ce07e9b0fa50d42c2add4878fd6e66.
 - 2026-08-16: Combined-main validation passed: 72 tests, typecheck, data validation, build, and 2 Chromium E2E tests.
+
+## TASK-006: Organize source and test trees
+**Status:** MERGED
+**Priority:** P1
+**Owner:** worker-task-006
+**Reviewer:** reviewer
+**Depends on:** none
+**Blocks:** none
+**Worktree:** C:\fidelity-mm-structure
+**Branch:** agent/TASK-006-organize-source-tests
+**PR:** https://github.com/RajeevAtla/fidelity-mm/pull/6
+
+### Objective
+Move production code into a structured `src/` tree and every automated test into a structured `tests/` tree without changing behavior.
+
+### Context
+Runtime modules and unit tests are currently mixed at the repository root, scraper implementations and tests share `scripts/`, and E2E tests use a separate top-level directory.
+
+### Scope
+Move files, update imports and tool configuration, update documentation, and preserve all runtime, scraper, build, validation, and test behavior.
+
+### Non-goals
+Do not rename public behavior, redesign modules, change tax/data contracts, alter generated JSON, upgrade dependencies, or refactor implementation logic beyond path changes required by the move.
+
+### Requirements
+- Use this source layout:
+  - `src/app/`: browser entry, application component, and model context.
+  - `src/config/`: application configuration.
+  - `src/data/`: data contracts, source metadata, and runtime boundary.
+  - `src/domain/`: calculations, categories, fund model, tax brackets, and bar widths.
+  - `src/ui/`: UI components, freshness model, and theme logic/adapters.
+  - `src/scripts/`: development and shared script utilities.
+  - `src/scripts/fidelity/`: Fidelity scrapers, parser helpers, and validator.
+  - `src/styles/`: source and generated CSS locations.
+- Use this test layout:
+  - `tests/unit/app/`, `tests/unit/data/`, `tests/unit/domain/`, `tests/unit/ui/`, and `tests/unit/scripts/` mirroring source responsibilities.
+  - `tests/e2e/` for Playwright tests.
+- Keep repository configuration, `index.html`, static `data/`, `fonts/`, workflows, and documentation at the repository root.
+- Update `package.json`, `tsconfig.json`, Farm, Playwright, HTML, CSS asset paths, workflows if needed, README, and `llms.txt` for the new paths.
+- Leave no test files outside `tests/` and no application/scraper source outside `src/`, excluding root tool configuration files.
+- Preserve import-safe scripts and all existing command names.
+
+### Acceptance criteria
+- [x] `src/` and `tests/` match the recorded layout.
+- [x] No `*.test.*` or `*.e2e.*` files remain outside `tests/`.
+- [x] Existing CLI commands and browser entry point work at their new paths.
+- [x] Unit, type, data validation, build, and E2E checks pass.
+- [x] Independent Terra review returns APPROVE.
+- [x] All commits are pushed and the PR is merged into `main`.
+
+### Interfaces / contracts
+Package script names, data file paths, application URL/base path, tax/data schemas, scraper CLI flags, and observable UI behavior remain unchanged.
+
+### Verification
+`bun test`, `bun run typecheck`, `bun run validate:data`, `bun run build`, `bun run test:e2e`, and a file-layout check proving tests and source are in their required roots.
+
+### Notes / risks
+This is a tightly coupled mechanical move across shared imports and build entry points, so one Worker owns the complete migration. An atomic move commit may exceed 200 changed lines if splitting would leave broken intermediate states; document the size exception.
+
+### Progress log
+- 2026-08-16: Sol inventoried source, tests, scripts, build configuration, workflows, and documentation; layout contract recorded.
+- 2026-08-16: Assigned to worker-task-006 in isolated worktree C:\fidelity-mm-structure.
+- 2026-08-16: Worker pushed atomic layout commit 3011cd4, opened PR #6, and passed unit, focused scraper, type, data, build, E2E, diff, old-path, and file-layout checks.
+- 2026-08-16: Terra independently reviewed PR #6 with no findings, passed the full verification suite, and approved TASK-006; CI passed.
+- 2026-08-16: PR #6 merged into main as 2cdf292ccdc110712ac9ae3ca85ae03bc14794c5.
+- 2026-08-16: Combined-main validation passed: 72 tests, typecheck, data validation, build, 2 Chromium E2E tests, and zero source/test files outside their required roots.
