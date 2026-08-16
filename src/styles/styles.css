@@ -6,7 +6,7 @@
 
 @font-face {
   font-family: "Soft Grotesk";
-  src: url("../../fonts/SoftGrotesk/TestVariableFonts/SoftGroteskTestVF.ttf") format("truetype");
+  src: url("../../fonts/SoftGrotesk/TestVariableFonts/SoftGroteskTestVF.woff2") format("woff2");
   font-style: normal;
   font-weight: 200 700;
   font-display: swap;
@@ -14,7 +14,7 @@
 
 @font-face {
   font-family: "Tripsis";
-  src: url("../../fonts/Test-Tripsis/TestVariableFonts/TripsisTestVF.ttf") format("truetype");
+  src: url("../../fonts/Test-Tripsis/TestVariableFonts/TripsisTestVF.woff2") format("woff2");
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
