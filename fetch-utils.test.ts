@@ -72,4 +72,32 @@ describe("fetchWithRetry", () => {
     expect(attempts).toBe(3);
     expect(sleeps).toEqual([10, 20]);
   });
+
+  test("honors caller aborts without retrying", async () => {
+    const controller = new AbortController();
+    let attempts = 0;
+    const sleeps: number[] = [];
+
+    await expect(
+      fetchWithRetry(
+        "https://example.test/data",
+        { retries: 3, retryDelayMs: 10, signal: controller.signal },
+        {
+          sleep: async (milliseconds) => {
+            sleeps.push(milliseconds);
+          },
+          fetch: async (_input, init) => {
+            attempts += 1;
+            expect(init?.signal).toBeDefined();
+            expect(init?.signal).not.toBe(controller.signal);
+            controller.abort();
+            throw new DOMException("aborted", "AbortError");
+          },
+        },
+      ),
+    ).rejects.toThrow("aborted");
+
+    expect(attempts).toBe(1);
+    expect(sleeps).toEqual([]);
+  });
 });
