@@ -1,8 +1,9 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @source "../app/index.tsx";
 @source "../app/main.tsx";
 @source "../domain/bar-widths.ts";
 @source "../ui/freshness.tsx";
+@source "../ui/fund-results.tsx";
 
 @font-face {
   font-family: "Soft Grotesk";
