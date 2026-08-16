@@ -1,10 +1,10 @@
 import "./tailwind.generated.css";
 import { Component, type ComponentChildren, render } from "preact";
 import App from "./index";
-import { ACTIVE_TAX_YEAR } from "./tax-brackets";
-import { APP_CONFIG } from "./app-config";
+import { APP_CONFIG, type StateCode } from "./app-config";
 import { applyThemeToDocument, getSystemThemePreference, readStoredThemeMode } from "./theme-browser";
 import { resolveThemeMode } from "./theme";
+import { describeModelContext } from "./model-context";
 
 type ModelContextDocument = Document & {
   modelContext?: {
@@ -37,16 +37,17 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: 
   }
 }
 
+let activeResidentState: StateCode = APP_CONFIG.defaults.state;
+
 async function registerAgentTools() {
   const modelContext = (document as ModelContextDocument).modelContext;
   if (!modelContext) return;
 
   await modelContext.registerTool({
     name: "get_fidelity_money_market_context",
-    description: "Read the current page's tax year, fund count, and current selection context for Fidelity money market after-tax yield comparisons.",
+    description: "Read the current page's tax year, fund count, and resident-state tax context for Fidelity money market after-tax yield comparisons.",
     inputSchema: { type: "object", properties: {} },
-    execute: async () =>
-      `Active tax year: ${ACTIVE_TAX_YEAR}. This page compares Fidelity money market fund seven-day yields using federal and ${APP_CONFIG.states[APP_CONFIG.defaults.state].name} single-filer tax selections.`,
+    execute: async () => describeModelContext(activeResidentState),
   });
 }
 
@@ -56,5 +57,15 @@ applyThemeToDocument(
   APP_CONFIG.theme.metaColors,
 );
 
-render(<ErrorBoundary><App initialThemeMode={initialThemeMode} /></ErrorBoundary>, document.getElementById("root")!);
+render(
+  <ErrorBoundary>
+    <App
+      initialThemeMode={initialThemeMode}
+      onResidentStateChange={(state) => {
+        activeResidentState = state;
+      }}
+    />
+  </ErrorBoundary>,
+  document.getElementById("root")!,
+);
 void registerAgentTools();

@@ -27,15 +27,17 @@ import {
 import { resolveThemeMode } from "./theme";
 import type { ResolvedTheme, ThemeMode } from "./theme";
 import type { CategoryCode } from "./categories";
+import { SUPPORTED_STATE_CODES, type StateCode } from "./app-config";
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
-const CURRENT_STATE = APP_CONFIG.states[APP_CONFIG.defaults.state];
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
-const stateB = (ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state] ?? []).map(({ rate: r, label: l }) => ({ r, l }));
 const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
-const initialStateBracketIndex = Math.min(APP_CONFIG.defaults.stateBracketIndex, Math.max(0, stateB.length - 1));
+const initialStateBracketIndex = Math.min(
+  APP_CONFIG.defaults.stateBracketIndex,
+  Math.max(0, ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state].brackets.length - 1),
+);
 
 const CL = APP_CONFIG.categories.labels;
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
@@ -121,8 +123,12 @@ function buttonClasses(active: boolean, tone?: string) {
   );
 }
 
-export default function App(props: { initialThemeMode: ThemeMode }) {
+export default function App(props: {
+  initialThemeMode: ThemeMode;
+  onResidentStateChange?: (state: StateCode) => void;
+}) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
+  const [state, setState] = useState<StateCode>(APP_CONFIG.defaults.state);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
     resolveThemeMode("system", getSystemThemePreference()),
   );
@@ -139,9 +145,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
     [minimumData, rateSheet, taxData],
   );
 
+  const currentState = APP_CONFIG.states[state];
+  const stateConfig = ACTIVE_TAX_CONFIG.states[state];
+  const stateB = stateConfig.brackets.map(({ rate: r, label: l }) => ({ r, l }));
+  const stateBracketIndex = Math.min(ni, Math.max(0, stateB.length - 1));
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
-  const nr = stateB[ni].r;
+  const nr = stateB[stateBracketIndex]?.r ?? 0;
 
   useEffect(() => {
     writeStoredThemeMode(THEME_STORAGE_KEY, themeMode);
@@ -162,13 +172,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
   }, [themeMode]);
 
   const res = useMemo(() => {
-    return filterAndSortFunds(calculateAfterTaxResults(funds, fr, nr), fc);
-  }, [funds, fr, nr, fc]);
+    return filterAndSortFunds(calculateAfterTaxResults(funds, fr, nr, state), fc);
+  }, [funds, fr, nr, state, fc]);
 
   const widthRange = useMemo(() => getWidthRange(res), [res]);
 
   const top = res[0];
-  const summary = useMemo(() => getWinnerMatrix(funds, fedB, stateB), [funds]);
+  const summary = useMemo(() => getWinnerMatrix(funds, fedB, stateB, state), [funds, state, stateB]);
   const categoryCounts = useMemo(() => countFundsByCategory(funds), [funds]);
 
   const filterCount = (category: CategoryFilter) =>
@@ -184,9 +194,28 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </h1>
             <p className="m-0 text-[11px] leading-[1.45] text-muted">
               Fidelity all-class money market 7-day yields. Single filer brackets ({ACTIVE_TAX_YEAR} tax year).
-              For {CURRENT_STATE.abbreviation} residents.
+              For {currentState.abbreviation} residents.
             </p>
             <DataFreshness sourceDate={rateSheet.requestedPriceDate} checkedAt={rateSheet.checkedAt} now={Date.now()} />
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm">
+            <label htmlFor="resident-state" className="px-1 text-[11px] font-bold text-subtle">Resident state</label>
+            <select
+              id="resident-state"
+              value={state}
+              onChange={(event) => {
+                const nextState = (event.currentTarget as HTMLSelectElement).value as StateCode;
+                setState(nextState);
+                props.onResidentStateChange?.(nextState);
+                setNi(Math.min(APP_CONFIG.defaults.stateBracketIndex, ACTIVE_TAX_CONFIG.states[nextState].brackets.length - 1));
+              }}
+              className="rounded border border-btn-border bg-btn-bg px-2 py-[5px] text-[11px] font-semibold text-btn-text"
+            >
+              {SUPPORTED_STATE_CODES.map((code) => (
+                <option key={code} value={code}>{APP_CONFIG.states[code].name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-1 shadow-sm" role="group" aria-label="Theme preference">
@@ -208,6 +237,12 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </div>
           </div>
         </header>
+
+        {stateConfig.note && (
+          <p className="mb-3 rounded border border-warning-border bg-warning-bg px-2 py-1.5 text-[10px] leading-[1.4] text-warning-text" role="status">
+            {stateConfig.note}
+          </p>
+        )}
 
         <div className="mb-3 flex flex-wrap gap-4 sm:gap-5">
           <div className="min-w-0 flex-[1_1_280px]">
@@ -237,19 +272,19 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
 
           <div className="min-w-0 flex-[1_1_280px]">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="state-bracket" className="text-[12px] font-semibold text-text">{CURRENT_STATE.abbreviation} State Bracket</label>
+              <label htmlFor="state-bracket" className="text-[12px] font-semibold text-text">{currentState.abbreviation} State Bracket</label>
               <span className="font-body text-[13px] font-bold text-state">
-                {stateB[ni].l}
+                {stateB[stateBracketIndex].l}
               </span>
             </div>
             <input
               id="state-bracket"
               type="range"
-              aria-label={`${CURRENT_STATE.abbreviation} marginal tax bracket`}
-              aria-valuetext={stateB[ni].l}
+              aria-label={`${currentState.abbreviation} marginal tax bracket`}
+              aria-valuetext={stateB[stateBracketIndex].l}
               min={APP_CONFIG.defaults.minimumBracketIndex}
               max={stateB.length - 1}
-              value={ni}
+              value={stateBracketIndex}
               onInput={(e) => setNi(rangeValue(e))}
               className="w-full accent-state"
             />
@@ -364,13 +399,13 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
           Winner at Every Bracket Combination
         </h2>
 
-        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label="Winner by federal and state tax bracket">
+        <div className="overflow-x-auto rounded-md border border-table-cell-border" role="region" aria-label={`Winner by federal and ${currentState.abbreviation} tax bracket`}>
           <table className="min-w-[560px] w-full border-collapse text-[10px]">
-            <caption className="sr-only">Best after-tax fund for every federal and state tax bracket combination</caption>
+            <caption className="sr-only">Best after-tax fund for every federal and {currentState.name} tax bracket combination</caption>
             <thead>
               <tr>
                 <th scope="col" className="border-b-2 border-table-header-border bg-table-header-bg px-[3px] py-[5px] text-left text-[9px] text-muted">
-                  Fed↓ \ NJ→
+                  Fed↓ \ {currentState.abbreviation}→
                 </th>
                 {stateB.map((b) => (
                   <th
@@ -434,7 +469,7 @@ export default function App(props: { initialThemeMode: ThemeMode }) {
             </span>
           ))}
           <br />
-          Yellow border = current selection. State exemption %s approximate & vary yearly. Yields net of ER.
+           Yellow border = current selection. State exemption %s approximate & vary yearly. Tax allocation data: {taxData.taxYear}. Yields net of ER.
           Not financial advice.
         </div>
       </div>

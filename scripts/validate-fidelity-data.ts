@@ -1,4 +1,6 @@
 import { DATA_PATHS } from "../data-sources";
+import { SUPPORTED_STATE_CODES } from "../app-config";
+import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "../tax-brackets";
 import { isCategoryCode } from "../categories";
 import type {
   MinimumData as MinimumDataContract,
@@ -95,14 +97,24 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
       if (rate?.name && tax.c !== categoryFor(rate.name)) {
         errors.push(symbol + ": category " + tax.c + " does not match fund name (expected " + categoryFor(rate.name) + ")");
       }
-      if (!finite(tax.njExemptPct) || tax.njExemptPct < 0 || tax.njExemptPct > 100) errors.push(symbol + ": invalid NJ exemption percentage");
+      if (!finite(tax.governmentExemptPct) || tax.governmentExemptPct < 0 || tax.governmentExemptPct > 100) {
+        errors.push(symbol + ": invalid government-obligation exemption percentage");
+      }
       if (!tax.sourceUrl) errors.push(symbol + ": incomplete tax provenance");
       if ("scrapedAt" in tax) errors.push(symbol + ": tax rule has a legacy per-fund scrapedAt");
     }
   }
-
   if (!Number.isInteger(taxData.taxYear) || (taxData.taxYear as number) < 2020) {
     errors.push("Tax data is missing a valid tax year");
+  } else if ((taxData.taxYear as number) > ACTIVE_TAX_YEAR || ACTIVE_TAX_YEAR - (taxData.taxYear as number) > 1) {
+    errors.push(`Tax data year ${taxData.taxYear} is outside the supported ${ACTIVE_TAX_YEAR} allocation-data window`);
+  }
+
+  for (const state of SUPPORTED_STATE_CODES) {
+    const stateConfig = ACTIVE_TAX_CONFIG.states[state];
+    if (!stateConfig || stateConfig.brackets.length === 0) {
+      errors.push(`${state}: missing state tax brackets`);
+    }
   }
   return errors;
 }

@@ -48,7 +48,7 @@ const makeRateSheet = (funds: RateSheetFund[]): RateSheetData => ({
   funds,
 });
 
-const rule = (c: TaxRule["c"] = "g"): TaxRule => ({ c, njExemptPct: 0, sourceUrl: "source" });
+const rule = (c: TaxRule["c"] = "g"): TaxRule => ({ c, governmentExemptPct: 0, sourceUrl: "source" });
 const minimum = (minimumLabel = "1M"): MinimumRule => ({
   minimumInvestment: 1,
   minimumLabel,
@@ -56,13 +56,13 @@ const minimum = (minimumLabel = "1M"): MinimumRule => ({
   status: "verified",
 });
 
-const fund = (t: string, c: Fund["c"], y: number, se = 0): Fund => ({
+const fund = (t: string, c: Fund["c"], y: number, ge = 0): Fund => ({
   t,
   n: t,
   y,
   er: 0,
   c,
-  se,
+  ge,
   mn: "1M",
 });
 
@@ -97,7 +97,7 @@ describe("fund model", () => {
         y: 4.25,
         er: 0.3,
         c: "g",
-        se: 0,
+        ge: 0,
         mn: "$1M",
       },
     ]);
@@ -117,7 +117,7 @@ describe("fund model", () => {
 
   test("calculates, filters, and sorts results without changing input order", () => {
     const funds = [fund("AAA", "g", 5), fund("BBB", "nm", 4.5), fund("CCC", "g", 4)];
-    const results = calculateAfterTaxResults(funds, 20, 5);
+    const results = calculateAfterTaxResults(funds, 20, 5, "nj");
     const before = structuredClone(results);
 
     expect(results.map(({ t, a }) => [t, a])).toEqual([
@@ -151,14 +151,14 @@ describe("fund model", () => {
     ] as const;
     const stateBrackets = [{ r: 0, l: "0%" }] as const;
 
-    expect(getWinnerMatrix(funds, federalBrackets, stateBrackets)).toEqual([
+    expect(getWinnerMatrix(funds, federalBrackets, stateBrackets, "nj")).toEqual([
       { fb: federalBrackets[0], cols: [{ t: "GOV", a: 5, c: "g" }] },
       { fb: federalBrackets[1], cols: [{ t: "MUNI", a: 4.4, c: "nm" }] },
     ]);
   });
 
   test("returns no winner rows when no funds are available", () => {
-    expect(getWinnerMatrix([], [{ r: 30, l: "30%" }], [{ r: 6, l: "6%" }])).toEqual([]);
+    expect(getWinnerMatrix([], [{ r: 30, l: "30%" }], [{ r: 6, l: "6%" }], "nj")).toEqual([]);
   });
 
   test("does not mutate inputs while building or deriving the model", () => {
@@ -168,8 +168,8 @@ describe("fund model", () => {
     const funds = buildFunds(rateSheet, { AAA: rule() }, { AAA: minimum() });
     const beforeFunds = structuredClone(funds);
 
-    getWinnerMatrix(funds, [{ r: 10, l: "10%" }], [{ r: 5, l: "5%" }]);
-    filterAndSortFunds(calculateAfterTaxResults(funds, 10, 5), "all");
+    getWinnerMatrix(funds, [{ r: 10, l: "10%" }], [{ r: 5, l: "5%" }], "nj");
+    filterAndSortFunds(calculateAfterTaxResults(funds, 10, 5, "nj"), "all");
 
     expect(rateSheet).toEqual(beforeRateSheet);
     expect(funds).toEqual(beforeFunds);

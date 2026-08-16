@@ -1,4 +1,5 @@
-import { calculateAfterTaxYield } from "./calculations";
+import { calculateAfterTaxYield, calculateStateExemptPct } from "./calculations";
+import type { StateCode } from "./app-config";
 import type { CategoryCode } from "./categories";
 import type { MinimumRule, RateSheetData, RateSheetFund, TaxRule } from "./data-contracts";
 
@@ -10,7 +11,7 @@ export type Fund = {
   y: number;
   er: number;
   c: CategoryCode;
-  se: number;
+  ge: number;
   mn: string;
 };
 
@@ -52,7 +53,7 @@ export function buildFunds(
         y: fund.sevenDayYield ?? 0,
         er: fund.expenseRatioNet ?? fund.expenseRatioGross ?? 0,
         c: rule.c,
-        se: rule.njExemptPct,
+        ge: rule.governmentExemptPct,
         mn: minimum.minimumLabel,
       };
     });
@@ -75,14 +76,20 @@ export function cleanLabel(value: string): string {
     .trim();
 }
 
-export function calculateAfterTaxResults(funds: Fund[], federalRate: number, stateRate: number): FundResult[] {
+export function calculateAfterTaxResults(
+  funds: Fund[],
+  federalRate: number,
+  stateRate: number,
+  state: StateCode,
+): FundResult[] {
   return funds.map((fund) => ({
     ...fund,
     a: calculateAfterTaxYield({
+      incomeType: "ordinary",
       grossYield: fund.y,
       federalRate,
       stateRate,
-      stateExemptPct: fund.se,
+      stateExemptPct: calculateStateExemptPct(state, fund.c, fund.ge),
       category: fund.c,
     }),
   }));
@@ -118,13 +125,14 @@ export function getWinnerMatrix(
   funds: Fund[],
   federalBrackets: readonly FundBracket[],
   stateBrackets: readonly FundBracket[],
+  state: StateCode,
 ): WinnerMatrixRow[] {
   if (funds.length === 0) return [];
 
   return federalBrackets.map((fb) => ({
     fb,
     cols: stateBrackets.map((nb) => {
-      const best = calculateAfterTaxResults(funds, fb.r, nb.r)
+      const best = calculateAfterTaxResults(funds, fb.r, nb.r, state)
         .map(({ t, a, c }) => ({ t, a, c }))
         .sort((a, b) => b.a - a.a)[0];
       return best!;

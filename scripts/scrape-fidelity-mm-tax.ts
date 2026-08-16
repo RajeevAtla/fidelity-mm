@@ -1,5 +1,6 @@
 import { DATA_PATHS, FIDELITY_SOURCES, SCRAPER_USER_AGENT } from "../data-sources";
 import type { RateSheetData, TaxData, TaxRule } from "../data-contracts";
+import { isMunicipalCategory } from "../calculations";
 import { fetchWithRetry } from "../fetch-utils";
 import { categoryFor } from "./fidelity-tax-utils";
 
@@ -90,7 +91,7 @@ export function buildTaxRules(
     const category = categoryFor(fund.name ?? "");
     result[fund.symbol] = {
       c: category,
-      njExemptPct: category === "nj" ? 100 : category === "nm" || category === "ny" || category === "ca" || category === "ma" ? 0 : percentageFor(fund, percentages),
+      governmentExemptPct: isMunicipalCategory(category) ? 0 : percentageFor(fund, percentages),
       sourceUrl,
     };
   }

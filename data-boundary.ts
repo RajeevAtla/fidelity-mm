@@ -103,9 +103,9 @@ export function parseTaxData(value: unknown): TaxData {
     requireField(fund, "c", "tax data", `${path}.c`, isCategoryCode, "a supported category code");
     requireField(
       fund,
-      "njExemptPct",
+      "governmentExemptPct",
       "tax data",
-      `${path}.njExemptPct`,
+      `${path}.governmentExemptPct`,
       isNumber,
       "a finite number",
     );

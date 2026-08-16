@@ -10,5 +10,6 @@ export function categoryFor(name: string): CategoryCode {
   if (value.includes("treasury only")) return "t";
   if (value.includes("treasury")) return "t";
   if (value.includes("government")) return "g";
-  return "p";
+  if (value.includes("money market")) return "p";
+  throw new Error("Unknown Fidelity tax fund category: " + name);
 }
