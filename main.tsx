@@ -1,10 +1,10 @@
 import "./tailwind.generated.css";
 import { Component, type ComponentChildren, render } from "preact";
 import App from "./index";
-import { ACTIVE_TAX_YEAR } from "./tax-brackets";
 import { APP_CONFIG, type StateCode } from "./app-config";
 import { applyThemeToDocument, getSystemThemePreference, readStoredThemeMode } from "./theme-browser";
 import { resolveThemeMode } from "./theme";
+import { describeModelContext } from "./model-context";
 
 type ModelContextDocument = Document & {
   modelContext?: {
@@ -38,11 +38,6 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: 
 }
 
 let activeResidentState: StateCode = APP_CONFIG.defaults.state;
-
-function describeModelContext(state: StateCode): string {
-  const currentState = APP_CONFIG.states[state];
-  return `Active tax year: ${ACTIVE_TAX_YEAR}. This page compares Fidelity money market fund seven-day yields using federal and selectable state single-filer tax selections. Active resident state: ${currentState.name} (${currentState.abbreviation}). Washington capital-gains tax is not applied to money-market yield income.`;
-}
 
 async function registerAgentTools() {
   const modelContext = (document as ModelContextDocument).modelContext;

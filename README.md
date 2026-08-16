@@ -178,7 +178,7 @@ A successful refresh triggers the deployment workflow after its data commit reac
 
 ## Tax calculations
 
-Federal and state tax brackets are maintained in `tax-brackets.ts`. The application uses single-filer marginal-rate selections rather than calculating a complete tax return. Washington is included as a zero ordinary-income-tax state; its separate capital-gains tax is not applied to money-market yield income. Keep the tax year and all bracket values together so a future update can be made in one place.
+Federal and state tax brackets are maintained in `tax-brackets.ts`. The application uses single-filer marginal-rate selections rather than calculating a complete tax return. All 50 states are selectable, including Alaska, Florida, Nevada, New Hampshire, South Dakota, Tennessee, Texas, and Wyoming as zero ordinary-income-tax states. Washington's separate capital-gains tax is not applied to money-market yield income. Arkansas uses the separate lower-income tax-table schedule cited by the 2026 source; the app does not determine eligibility for Arkansas's alternate high-income schedule or model its deductions, credits, or exemptions. Keep the tax year and all bracket values together so a future update can be made in one place.
 
 When updating tax rules:
 
