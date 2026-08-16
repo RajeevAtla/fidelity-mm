@@ -2,6 +2,7 @@ import "../styles/tailwind.generated.css";
 import { Component, type ComponentChildren, render } from "preact";
 import App from "./index";
 import { APP_CONFIG, type StateCode } from "../config/app-config";
+import { loadAppData } from "../data/data-loader";
 import { applyThemeToDocument, getSystemThemePreference, readStoredThemeMode } from "../ui/theme-browser";
 import { resolveThemeMode } from "../ui/theme";
 import { describeModelContext } from "./model-context";
@@ -17,6 +18,24 @@ type ModelContextDocument = Document & {
   };
 };
 
+function DataLoading() {
+  return (
+    <main role="main" style="padding: 2rem; font-family: system-ui, sans-serif;">
+      <h1>Loading Fidelity data</h1>
+      <p>The latest fund data is loading.</p>
+    </main>
+  );
+}
+
+function DataUnavailable() {
+  return (
+    <main role="main" style="padding: 2rem; font-family: system-ui, sans-serif;">
+      <h1>Fidelity data is temporarily unavailable</h1>
+      <p>The page could not load its generated fund data. Please refresh later.</p>
+    </main>
+  );
+}
+
 class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: Error | null }> {
   state = { error: null as Error | null };
 
@@ -26,12 +45,7 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: 
 
   render() {
     if (this.state.error) {
-      return (
-        <main role="main" style="padding: 2rem; font-family: system-ui, sans-serif;">
-          <h1>Fidelity data is temporarily unavailable</h1>
-          <p>The page could not load its generated fund data. Please refresh later.</p>
-        </main>
-      );
+      return <DataUnavailable />;
     }
     return this.props.children;
   }
@@ -57,15 +71,29 @@ applyThemeToDocument(
   APP_CONFIG.theme.metaColors,
 );
 
-render(
-  <ErrorBoundary>
-    <App
-      initialThemeMode={initialThemeMode}
-      onResidentStateChange={(state) => {
-        activeResidentState = state;
-      }}
-    />
-  </ErrorBoundary>,
-  document.getElementById("root")!,
-);
+const root = document.getElementById("root")!;
+render(<DataLoading />, root);
+void loadAppData()
+  .then((data) => {
+    render(
+      <ErrorBoundary>
+        <App
+          data={data}
+          initialThemeMode={initialThemeMode}
+          onResidentStateChange={(state) => {
+            activeResidentState = state;
+          }}
+        />
+      </ErrorBoundary>,
+      root,
+    );
+  })
+  .catch(() => {
+    render(
+      <ErrorBoundary>
+        <DataUnavailable />
+      </ErrorBoundary>,
+      root,
+    );
+  });
 void registerAgentTools();
