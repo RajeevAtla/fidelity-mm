@@ -27,11 +27,13 @@ export function writeStoredThemeMode(storageKey: string, mode: ThemeMode): void 
 }
 
 export function getSystemThemePreference(): boolean {
-  return typeof window !== "undefined" && window.matchMedia(DARK_MODE_QUERY).matches;
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(DARK_MODE_QUERY).matches
+    : false;
 }
 
 export function subscribeToSystemThemePreference(onChange: (prefersDark: boolean) => void): (() => void) | undefined {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return undefined;
   }
 
