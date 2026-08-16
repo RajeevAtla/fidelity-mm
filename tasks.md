@@ -379,6 +379,7 @@ This slice may overlap TASK-007A in `styles.css` or TASK-007B in Farm config; re
 - 2026-08-16: Worker retained no code: Farm variants saved at most 596 gzip bytes while weakening runtime caching or produced no gain, and CSS removal was rejected because complete dynamic browser coverage could not be proven. Clean branch submitted for Terra evidence review.
 - 2026-08-16: Terra independently measured the inline runtime tradeoff, completed Node Playwright coverage across dynamic states (86.87% observed), passed full checks, and approved retaining baseline with no PR.
 - 2026-08-16: Approved no-code decision integrated into TASK-007; no unsafe runtime or CSS experiment was retained.
+- 2026-08-16: Removed the final empty `C:\fidelity-mm-review-007c` directory after its Git worktree and reviewer pane were cleaned up.
 
 ## TASK-007D: Stabilize Tailwind source discovery
 **Status:** MERGED
