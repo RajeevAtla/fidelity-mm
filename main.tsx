@@ -1,8 +1,10 @@
 import "./tailwind.generated.css";
 import { Component, type ComponentChildren, render } from "preact";
-import App, { applyThemeToDocument, getStoredThemeMode, resolveThemeMode } from "./index";
+import App from "./index";
 import { ACTIVE_TAX_YEAR } from "./tax-brackets";
-import { APP_CONFIG, SUPPORTED_STATE_CODES } from "./app-config";
+import { APP_CONFIG, type StateCode } from "./app-config";
+import { applyThemeToDocument, getSystemThemePreference, readStoredThemeMode } from "./theme-browser";
+import { resolveThemeMode } from "./theme";
 
 type ModelContextDocument = Document & {
   modelContext?: {
@@ -35,6 +37,13 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: 
   }
 }
 
+let activeResidentState: StateCode = APP_CONFIG.defaults.state;
+
+function describeModelContext(state: StateCode): string {
+  const currentState = APP_CONFIG.states[state];
+  return `Active tax year: ${ACTIVE_TAX_YEAR}. This page compares Fidelity money market fund seven-day yields using federal and selectable state single-filer tax selections. Active resident state: ${currentState.name} (${currentState.abbreviation}). Washington capital-gains tax is not applied to money-market yield income.`;
+}
+
 async function registerAgentTools() {
   const modelContext = (document as ModelContextDocument).modelContext;
   if (!modelContext) return;
@@ -43,13 +52,25 @@ async function registerAgentTools() {
     name: "get_fidelity_money_market_context",
     description: "Read the current page's tax year, fund count, and resident-state tax context for Fidelity money market after-tax yield comparisons.",
     inputSchema: { type: "object", properties: {} },
-    execute: async () =>
-      `Active tax year: ${ACTIVE_TAX_YEAR}. This page compares Fidelity money market fund seven-day yields using federal and selectable state single-filer tax selections. Default resident state: ${APP_CONFIG.states[APP_CONFIG.defaults.state].name}. Supported states: ${SUPPORTED_STATE_CODES.length}. Washington capital-gains tax is not applied to money-market yield income.`,
+    execute: async () => describeModelContext(activeResidentState),
   });
 }
 
-const initialThemeMode = getStoredThemeMode();
-applyThemeToDocument(resolveThemeMode(initialThemeMode));
+const initialThemeMode = readStoredThemeMode(APP_CONFIG.theme.storageKey);
+applyThemeToDocument(
+  resolveThemeMode(initialThemeMode, getSystemThemePreference()),
+  APP_CONFIG.theme.metaColors,
+);
 
-render(<ErrorBoundary><App initialThemeMode={initialThemeMode} /></ErrorBoundary>, document.getElementById("root")!);
+render(
+  <ErrorBoundary>
+    <App
+      initialThemeMode={initialThemeMode}
+      onResidentStateChange={(state) => {
+        activeResidentState = state;
+      }}
+    />
+  </ErrorBoundary>,
+  document.getElementById("root")!,
+);
 void registerAgentTools();

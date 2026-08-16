@@ -1,3 +1,5 @@
+import { CATEGORY_CODES, MUNICIPAL_CATEGORIES, type CategoryCode } from "./categories";
+
 export const SUPPORTED_STATE_CODES = [
   "al", "az", "ar", "ca", "co", "ct", "de", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la",
   "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nj", "nm", "ny", "nc", "nd", "oh", "ok",
@@ -5,7 +7,6 @@ export const SUPPORTED_STATE_CODES = [
 ] as const;
 
 export type StateCode = typeof SUPPORTED_STATE_CODES[number];
-export type CategoryCode = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
 export type StateMunicipalCategory = Extract<CategoryCode, "nj" | "ny" | "ca" | "ma">;
 
 export const STATE_MUNICIPAL_CATEGORIES: StateMunicipalCategory[] = ["nj", "ny", "ca", "ma"];
@@ -84,7 +85,7 @@ export const APP_CONFIG = {
     },
   },
   categories: {
-    order: ["p", "g", "t", "nm", "nj", "ny", "ca", "ma"] as CategoryCode[],
+    order: CATEGORY_CODES,
     labels: {
       p: "Prime",
       g: "Government",
@@ -95,6 +96,6 @@ export const APP_CONFIG = {
       ca: "CA Muni",
       ma: "MA Muni",
     } satisfies Record<CategoryCode, string>,
-    municipal: ["nm", "nj", "ny", "ca", "ma"] as CategoryCode[],
+    municipal: MUNICIPAL_CATEGORIES,
   },
 } as const;

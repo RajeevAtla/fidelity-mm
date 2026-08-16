@@ -1,6 +1,6 @@
-export type TaxCategory = "p" | "g" | "t" | "nm" | "nj" | "ny" | "ca" | "ma";
+import type { CategoryCode } from "../categories";
 
-export function categoryFor(name: string): TaxCategory {
+export function categoryFor(name: string): CategoryCode {
   const value = name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   if (value.includes("new jersey")) return "nj";
   if (value.includes("new york")) return "ny";

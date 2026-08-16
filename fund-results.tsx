@@ -1,4 +1,4 @@
-import type { CategoryCode } from "./app-config";
+import type { CategoryCode } from "./categories";
 
 export type FundResultItem = {
   t: string;
