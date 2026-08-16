@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const previewPort = process.env.PLAYWRIGHT_PORT ?? "4173";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./tests/e2e",
   testMatch: "**/*.e2e.ts",
   outputDir: "node_modules/.cache/playwright-results",
   retries: process.env.CI ? 2 : 0,

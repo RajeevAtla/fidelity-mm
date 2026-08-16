@@ -15,5 +15,5 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["*.tsx", "*.ts", "*.d.ts", "scripts/**/*.ts", "data/*.json"]
+  "include": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts", "data/*.json"]
 }

@@ -1,5 +1,5 @@
 node_modules/
 dist/
-tailwind.generated.css
+src/styles/tailwind.generated.css
 artifacts/
 .opencode/
