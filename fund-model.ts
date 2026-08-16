@@ -119,6 +119,8 @@ export function getWinnerMatrix(
   federalBrackets: readonly FundBracket[],
   stateBrackets: readonly FundBracket[],
 ): WinnerMatrixRow[] {
+  if (funds.length === 0) return [];
+
   return federalBrackets.map((fb) => ({
     fb,
     cols: stateBrackets.map((nb) => {

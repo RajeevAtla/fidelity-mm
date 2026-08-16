@@ -157,6 +157,10 @@ describe("fund model", () => {
     ]);
   });
 
+  test("returns no winner rows when no funds are available", () => {
+    expect(getWinnerMatrix([], [{ r: 30, l: "30%" }], [{ r: 6, l: "6%" }])).toEqual([]);
+  });
+
   test("does not mutate inputs while building or deriving the model", () => {
     const rateFund = makeRateFund({ symbol: "AAA" });
     const rateSheet = makeRateSheet([rateFund]);
