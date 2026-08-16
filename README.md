@@ -32,17 +32,18 @@ The figures shown in the application are informational comparisons. They are not
 
 | Path | Purpose |
 | --- | --- |
-| `index.tsx` | Main application component and comparison interface. |
-| `main.tsx` | Browser entry point that mounts the application. |
-| `styles.css` | Source styles, theme variables, layout rules, and responsive behavior. |
-| `bar-widths.ts` | Shared calculations used to size and scale comparison bars. |
-| `tax-brackets.ts` | Federal and state tax bracket data and tax-year configuration. |
+| `src/app/index.tsx` | Main application component and comparison interface. |
+| `src/app/main.tsx` | Browser entry point that mounts the application. |
+| `src/styles/styles.css` | Source styles, theme variables, layout rules, and responsive behavior. |
+| `src/domain/bar-widths.ts` | Shared calculations used to size and scale comparison bars. |
+| `src/domain/tax-brackets.ts` | Federal and state tax bracket data and tax-year configuration. |
 | `data/fidelity-mm-allclass.json` | Yield and fund-class data used by the application. |
 | `data/fidelity-mm-minimums.json` | Minimum investment values, source links, and a top-level check timestamp. |
 | `data/fidelity-mm-tax-rules.json` | Tax-year-specific fund categories and government-obligation exemption percentages. |
-| `scripts/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
-| `scripts/scrape-fidelity-mm-minimums.ts` | Uses Fidelity fund numbers to refresh minimum investment data. |
-| `scripts/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
+| `src/scripts/fidelity/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
+| `src/scripts/fidelity/scrape-fidelity-mm-minimums.ts` | Uses Fidelity fund numbers to refresh minimum investment data. |
+| `src/scripts/fidelity/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
+| `tests/unit/` and `tests/e2e/` | Unit and Playwright tests for the application and refresh scripts. |
 | `farm.config.ts` | Farm build configuration, including the deployment base path. |
 | `.github/workflows/data.yml` | Scheduled and manual data-refresh workflow. |
 | `.github/workflows/deploy.yml` | GitHub Pages build and deployment workflow. |
@@ -78,7 +79,7 @@ Start the development server:
 bun run dev
 ```
 
-The development script serves the application locally. The exact port is defined by `scripts/dev.mjs`; use the URL printed by Bun in the terminal.
+The development script serves the application locally. The exact port is defined by `src/scripts/dev.mjs`; use the URL printed by Bun in the terminal.
 
 Create a production build:
 
@@ -277,7 +278,7 @@ bun install
 bun run dev
 ```
 
-If the port is already in use, stop the other local process or use the port option supported by `scripts/dev.mjs`.
+If the port is already in use, stop the other local process or use the port option supported by `src/scripts/dev.mjs`.
 
 ### The build fails after a style change
 

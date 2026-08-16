@@ -28,3 +28,10 @@ This page compares Fidelity money market funds using scraped 7-day yields and an
 ## Accessibility
 
 All controls are labeled and keyboard accessible. The fund list and bracket matrix expose their values in the accessibility tree.
+
+## Repository layout
+
+- Browser and application source live under `src/`.
+- Fidelity refresh and validation scripts live under `src/scripts/fidelity/`.
+- Unit and Playwright tests live under `tests/unit/` and `tests/e2e/`.
+- Checked-in JSON data remains under `data/` at the repository root.

@@ -1,5 +1,5 @@
 import { defineConfig } from "@farmfe/core";
-import { APP_CONFIG } from "./app-config";
+import { APP_CONFIG } from "./src/config/app-config";
 
 export default defineConfig({
   compilation: {
