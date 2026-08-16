@@ -38,12 +38,12 @@ export async function fetchWithRetry(
       const response = await request(input, { ...init, signal: controller.signal });
       if (init.signal?.aborted) throw abortReason(init.signal);
       if (!shouldRetry(response.status) || attempt === retries) return response;
-      await sleep(retryDelayMs * 2 ** attempt);
+      await waitForRetry(sleep, retryDelayMs * 2 ** attempt, init.signal);
     } catch (error) {
       if (init.signal?.aborted) throw abortReason(init.signal);
       lastError = error;
       if (attempt === retries) throw error;
-      await sleep(retryDelayMs * 2 ** attempt);
+      await waitForRetry(sleep, retryDelayMs * 2 ** attempt, init.signal);
     } finally {
       clock.clearTimeout(timeout);
       init.signal?.removeEventListener("abort", onAbort);
@@ -68,4 +68,40 @@ const defaultClock: FetchRetryClock = {
 
 function abortReason(signal: AbortSignal): unknown {
   return signal.reason ?? new DOMException("The operation was aborted.", "AbortError");
+}
+
+function waitForRetry(
+  sleep: (milliseconds: number) => Promise<void>,
+  milliseconds: number,
+  signal?: AbortSignal | null,
+): Promise<void> {
+  if (!signal) return sleep(milliseconds);
+  if (signal.aborted) return Promise.reject(abortReason(signal));
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => signal.removeEventListener("abort", onAbort);
+    const onAbort = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(abortReason(signal));
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+    void (async () => {
+      try {
+        await sleep(milliseconds);
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      } catch (error) {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error);
+      }
+    })();
+  });
 }

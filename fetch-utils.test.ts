@@ -100,4 +100,40 @@ describe("fetchWithRetry", () => {
     expect(attempts).toBe(1);
     expect(sleeps).toEqual([]);
   });
+
+  test("aborts an in-progress retry delay", async () => {
+    const controller = new AbortController();
+    let releaseSleep!: () => void;
+    const sleepPromise = new Promise<void>((resolve) => {
+      releaseSleep = resolve;
+    });
+    let attempts = 0;
+
+    const request = fetchWithRetry(
+      "https://example.test/data",
+      { retries: 1, retryDelayMs: 10_000, signal: controller.signal },
+      {
+        sleep: async () => sleepPromise,
+        fetch: async () => {
+          attempts += 1;
+          return new Response("busy", { status: 503 });
+        },
+      },
+    ).then(
+      () => "completed" as const,
+      (error) => error,
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    controller.abort();
+    const outcome = await Promise.race([
+      request,
+      new Promise<symbol>((resolve) => setTimeout(() => resolve(Symbol.for("timeout")), 25)),
+    ]);
+    releaseSleep();
+
+    expect(outcome).not.toBe(Symbol.for("timeout"));
+    expect(outcome).toBeInstanceOf(DOMException);
+    expect(attempts).toBe(1);
+  });
 });
