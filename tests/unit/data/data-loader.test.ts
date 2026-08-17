@@ -108,7 +108,18 @@ describe("application data loader", () => {
     const fetcher: DataFetcher = async (input) => {
       const url = new URL(String(input));
       const body = url.pathname.endsWith("minimums.json")
-        ? { checkedAt: "2026-08-16T00:00:00.000Z", count: 0, funds: { FNSXX: {} } }
+        ? {
+            source: "https://example.test/source",
+            checkedAt: "2026-08-16T00:00:00.000Z",
+            count: 1,
+            funds: {
+              FNSXX: {
+                minimumInvestment: 0,
+                sourceUrl: "https://example.test/fund",
+                status: "verified",
+              },
+            },
+          }
         : url.pathname.endsWith("allclass.json")
           ? rateDataJson
           : taxDataJson;
