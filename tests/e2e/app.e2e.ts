@@ -84,6 +84,41 @@ test("restores every scenario field from a shareable URL", async ({ page }) => {
   expect(params.get("expanded")).toBe("true");
 });
 
+test("restores scenario controls on browser back and forward", async ({ page }) => {
+  await page.goto("./");
+  await expect(page.getByRole("heading", { name: /All 40 Fidelity Money Market Funds/ })).toBeVisible();
+
+  const scenarioBack = "?state=ny&fi=2&ni=2&category=all&balance=2000000&expanded=true";
+  const scenarioForward = "?state=tx&fi=4&ni=0&category=all&balance=3000000&expanded=false";
+  await page.evaluate(({ scenarioBack, scenarioForward }) => {
+    window.history.pushState({}, "", scenarioBack);
+    window.history.pushState({}, "", scenarioForward);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, { scenarioBack, scenarioForward });
+
+  await expect(page.getByRole("combobox", { name: "Resident state" })).toHaveValue("tx");
+  await expect(page.getByRole("slider", { name: "Federal marginal tax bracket" })).toHaveValue("4");
+  await expect(page.getByRole("slider", { name: "TX marginal tax bracket" })).toHaveValue("0");
+  await expect(page.getByRole("spinbutton", { name: "Annual balance" })).toHaveValue("3000000");
+  await expect(page.getByRole("button", { name: "All funds" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /Show all 40 funds/ })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("region", { name: "Winner by federal and TX tax bracket" })).toBeVisible();
+
+  await page.goBack();
+  await expect(page.getByRole("combobox", { name: "Resident state" })).toHaveValue("ny");
+  await expect(page.getByRole("slider", { name: "Federal marginal tax bracket" })).toHaveValue("2");
+  await expect(page.getByRole("slider", { name: "NY marginal tax bracket" })).toHaveValue("2");
+  await expect(page.getByRole("spinbutton", { name: "Annual balance" })).toHaveValue("2000000");
+  await expect(page.getByRole("button", { name: "Show only the top initial funds" })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("region", { name: "Winner by federal and NY tax bracket" })).toBeVisible();
+
+  await page.goForward();
+  await expect(page.getByRole("combobox", { name: "Resident state" })).toHaveValue("tx");
+  await expect(page.getByRole("slider", { name: "Federal marginal tax bracket" })).toHaveValue("4");
+  await expect(page.getByRole("spinbutton", { name: "Annual balance" })).toHaveValue("3000000");
+  expect(new URL(page.url()).searchParams.get("expanded")).toBe("false");
+});
+
 test("shows safe Fidelity links, calculation inputs, and balance updates", async ({ page }) => {
   await page.goto("./");
   await page.getByRole("button", { name: /Show all 40 funds/ }).click();
@@ -109,7 +144,10 @@ test("shows safe Fidelity links, calculation inputs, and balance updates", async
   await expect(details).toContainText("Federal rate");
   await expect(details).toContainText("State rate");
   await expect(details).toContainText("Exemption percentage");
-  await expect(details).toContainText("Tax year inputs");
+  await expect(details).toContainText("Bracket inputs year");
+  await expect(details).toContainText("Allocation/exemption data year");
+  await expect(details).toContainText("2026");
+  await expect(details).toContainText("2025");
   await expect(details).toContainText("Resulting after-tax yield");
 
   await expect.poll(() => new URL(page.url()).searchParams.get("balance")).toBe("1000000");

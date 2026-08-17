@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { BAR_WIDTH_CLASSES } from "../domain/bar-widths";
 import type { AppData } from "../data/data-boundary";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "../domain/tax-brackets";
@@ -116,6 +116,15 @@ function getInitialScenario(): Scenario {
   return typeof window === "undefined" ? DEFAULT_SCENARIO : parseScenarioUrl(window.location.search);
 }
 
+function scenariosEqual(left: Scenario, right: Scenario) {
+  return left.state === right.state
+    && left.fi === right.fi
+    && left.ni === right.ni
+    && left.category === right.category
+    && left.balance === right.balance
+    && left.expanded === right.expanded;
+}
+
 function syncScenarioUrl(scenario: Scenario) {
   const params = serializeScenarioUrl(scenario);
   window.history.replaceState(
@@ -150,6 +159,8 @@ export default function App(props: {
   const [fc, setFc] = useState<CategoryFilter>(scenarioAtLoad.category);
   const [balance, setBalance] = useState(scenarioAtLoad.balance);
   const [showAll, setShowAll] = useState(scenarioAtLoad.expanded);
+  const currentScenarioRef = useRef<Scenario>(scenarioAtLoad);
+  const pendingHistoryScenarioRef = useRef<Scenario | null>(null);
   const { rateSheet, minimumData, taxData } = props.data;
   const funds = useMemo(
     () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
@@ -163,6 +174,7 @@ export default function App(props: {
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
   const nr = stateB[stateBracketIndex]?.r ?? 0;
+  currentScenarioRef.current = { state, fi, ni: stateBracketIndex, category: fc, balance, expanded: showAll };
 
   useEffect(() => {
     writeStoredThemeMode(THEME_STORAGE_KEY, themeMode);
@@ -173,7 +185,36 @@ export default function App(props: {
   }, [props.onResidentStateChange, state]);
 
   useEffect(() => {
-    syncScenarioUrl({ state, fi, ni: stateBracketIndex, category: fc, balance, expanded: showAll });
+    const handlePopState = () => {
+      const nextScenario = parseScenarioUrl(window.location.search);
+      pendingHistoryScenarioRef.current = nextScenario;
+      if (scenariosEqual(currentScenarioRef.current, nextScenario)) {
+        pendingHistoryScenarioRef.current = null;
+        syncScenarioUrl(nextScenario);
+        return;
+      }
+      setState(nextScenario.state);
+      setFi(nextScenario.fi);
+      setNi(nextScenario.ni);
+      setFc(nextScenario.category);
+      setBalance(nextScenario.balance);
+      setShowAll(nextScenario.expanded);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const pendingScenario = pendingHistoryScenarioRef.current;
+    if (pendingScenario) {
+      if (scenariosEqual(currentScenarioRef.current, pendingScenario)) {
+        pendingHistoryScenarioRef.current = null;
+        syncScenarioUrl(currentScenarioRef.current);
+      }
+      return;
+    }
+    syncScenarioUrl(currentScenarioRef.current);
   }, [balance, fc, fi, showAll, state, stateBracketIndex]);
 
   useEffect(() => {
@@ -446,7 +487,7 @@ export default function App(props: {
               </summary>
               <div className="mt-2 max-w-3xl break-words text-[11px] leading-[1.45] text-muted">
                 <p className="m-0">
-                  The existing model treats money-market yield as ordinary income. It applies federal tax to taxable income and state tax to the portion not covered by the exemption; municipal funds are not charged federal tax. The winner is the highest resulting after-tax yield.
+                  The existing model treats money-market yield as ordinary income. It uses {ACTIVE_TAX_YEAR} bracket rates and {taxData.taxYear} allocation/exemption data, then applies federal tax to taxable income and state tax to the portion not covered by the exemption; municipal funds are not charged federal tax. The winner is the highest resulting after-tax yield.
                 </p>
                 <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
                   <div className="flex justify-between gap-3">
@@ -466,8 +507,12 @@ export default function App(props: {
                     <dd className="m-0 font-semibold text-text">{topExemptionPct.toFixed(2)}%</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt>Tax year inputs</dt>
+                    <dt>Bracket inputs year</dt>
                     <dd className="m-0 font-semibold text-text">{ACTIVE_TAX_YEAR}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Allocation/exemption data year</dt>
+                    <dd className="m-0 font-semibold text-text">{taxData.taxYear}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt>Resulting after-tax yield</dt>
