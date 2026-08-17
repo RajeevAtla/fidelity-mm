@@ -104,6 +104,57 @@ describe("application data loader", () => {
     ]);
   });
 
+  test("waits for failed-batch siblings before exposing a retry", async () => {
+    const calls: string[] = [];
+    let firstBatch = true;
+    let releaseMinimum!: () => void;
+    let releaseTax!: () => void;
+    let signalRateFailure!: () => void;
+    const minimumPending = new Promise<void>((resolve) => {
+      releaseMinimum = resolve;
+    });
+    const taxPending = new Promise<void>((resolve) => {
+      releaseTax = resolve;
+    });
+    const rateFailure = new Promise<void>((resolve) => {
+      signalRateFailure = resolve;
+    });
+    const fetcher: DataFetcher = async (input) => {
+      const url = new URL(String(input));
+      const path = url.pathname;
+      calls.push(path);
+      if (firstBatch && path.endsWith("allclass.json")) {
+        signalRateFailure();
+        throw new Error("offline");
+      }
+      if (firstBatch && path.endsWith("minimums.json")) await minimumPending;
+      if (firstBatch && path.endsWith("tax-rules.json")) await taxPending;
+      const body = path.endsWith("allclass.json")
+        ? rateDataJson
+        : path.endsWith("minimums.json")
+          ? minimumDataJson
+          : taxDataJson;
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+
+    const first = loadAppData({ baseUrl: "https://example.test/drain/", fetch: fetcher });
+    await rateFailure;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const retryBeforeSiblingsSettle = loadAppData({ baseUrl: "https://example.test/drain/", fetch: fetcher });
+    expect(retryBeforeSiblingsSettle).toBe(first);
+    expect(calls).toHaveLength(3);
+
+    releaseMinimum();
+    releaseTax();
+    await expect(first).rejects.toThrow("Could not load data/fidelity-mm-allclass.json: network request failed");
+
+    firstBatch = false;
+    const retry = loadAppData({ baseUrl: "https://example.test/drain/", fetch: fetcher });
+    await retry;
+    expect(calls).toHaveLength(6);
+  });
+
   test("surfaces malformed fetched documents through the data boundary", async () => {
     const fetcher: DataFetcher = async (input) => {
       const url = new URL(String(input));

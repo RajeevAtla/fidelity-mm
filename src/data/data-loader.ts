@@ -17,13 +17,17 @@ export function loadAppData(options: DataLoaderOptions = {}): Promise<AppData> {
   const baseUrl = options.baseUrl ?? (typeof document === "undefined" ? undefined : document.baseURI);
   if (!baseUrl) throw new Error("Cannot resolve the application data base URL");
 
-  const pending = Promise.all([
+  const requests = [
     loadJson(DATA_PATHS.rateSheet, fetcher, baseUrl),
     loadJson(DATA_PATHS.minimums, fetcher, baseUrl),
     loadJson(DATA_PATHS.taxRules, fetcher, baseUrl),
-  ]).then(([rateSheet, minimumData, taxData]) => parseAppData(rateSheet, minimumData, taxData));
+  ];
+  const pending = Promise.all(requests).then(([rateSheet, minimumData, taxData]) =>
+    parseAppData(rateSheet, minimumData, taxData),
+  );
 
-  cachedAppData = pending.catch((error) => {
+  cachedAppData = pending.catch(async (error) => {
+    await Promise.allSettled(requests);
     cachedAppData = undefined;
     throw error;
   });
