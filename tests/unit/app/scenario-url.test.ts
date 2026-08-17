@@ -24,7 +24,7 @@ describe("scenario URL", () => {
 
     const params = serializeScenarioUrl(scenario);
 
-    expect([...params.keys()]).toEqual(SCENARIO_QUERY_KEYS);
+    expect([...params.keys()]).toEqual([...SCENARIO_QUERY_KEYS]);
     expect(parseScenarioUrl(params)).toEqual(scenario);
   });
 
