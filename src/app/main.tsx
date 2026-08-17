@@ -27,16 +27,17 @@ function DataLoading() {
   );
 }
 
-function DataUnavailable() {
+function DataUnavailable({ onRetry }: { onRetry: () => void }) {
   return (
     <main role="main" style="padding: 2rem; font-family: system-ui, sans-serif;">
       <h1>Fidelity data is temporarily unavailable</h1>
       <p>The page could not load its generated fund data. Please refresh later.</p>
+      <button type="button" onClick={onRetry}>Retry loading Fidelity data</button>
     </main>
   );
 }
 
-class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: Error | null }> {
+class ErrorBoundary extends Component<{ children: ComponentChildren; onRetry: () => void }, { error: Error | null }> {
   state = { error: null as Error | null };
 
   componentDidCatch(error: Error) {
@@ -45,7 +46,7 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: 
 
   render() {
     if (this.state.error) {
-      return <DataUnavailable />;
+      return <DataUnavailable onRetry={this.props.onRetry} />;
     }
     return this.props.children;
   }
@@ -72,11 +73,13 @@ applyThemeToDocument(
 );
 
 const root = document.getElementById("root")!;
-render(<DataLoading />, root);
-void loadAppData()
-  .then((data) => {
+async function loadAndRenderApp(): Promise<void> {
+  render(<DataLoading />, root);
+
+  try {
+    const data = await loadAppData();
     render(
-      <ErrorBoundary>
+      <ErrorBoundary onRetry={() => void loadAndRenderApp()}>
         <App
           data={data}
           initialThemeMode={initialThemeMode}
@@ -87,13 +90,10 @@ void loadAppData()
       </ErrorBoundary>,
       root,
     );
-  })
-  .catch(() => {
-    render(
-      <ErrorBoundary>
-        <DataUnavailable />
-      </ErrorBoundary>,
-      root,
-    );
-  });
+  } catch {
+    render(<DataUnavailable onRetry={() => void loadAndRenderApp()} />, root);
+  }
+}
+
+void loadAndRenderApp();
 void registerAgentTools();

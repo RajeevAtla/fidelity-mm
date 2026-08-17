@@ -17,29 +17,36 @@ export function loadAppData(options: DataLoaderOptions = {}): Promise<AppData> {
   const baseUrl = options.baseUrl ?? (typeof document === "undefined" ? undefined : document.baseURI);
   if (!baseUrl) throw new Error("Cannot resolve the application data base URL");
 
-  const pending = Promise.all([
-    loadJson(DATA_PATHS.rateSheet, fetcher, baseUrl),
-    loadJson(DATA_PATHS.minimums, fetcher, baseUrl),
-    loadJson(DATA_PATHS.taxRules, fetcher, baseUrl),
-  ]).then(([rateSheet, minimumData, taxData]) => parseAppData(rateSheet, minimumData, taxData));
+  const controller = new AbortController();
+  const requests = [
+    loadJson(DATA_PATHS.rateSheet, fetcher, baseUrl, controller.signal),
+    loadJson(DATA_PATHS.minimums, fetcher, baseUrl, controller.signal),
+    loadJson(DATA_PATHS.taxRules, fetcher, baseUrl, controller.signal),
+  ];
+  const pending = Promise.all(requests).then(([rateSheet, minimumData, taxData]) =>
+    parseAppData(rateSheet, minimumData, taxData),
+  );
 
-  cachedAppData = pending.catch((error) => {
-    cachedAppData = undefined;
+  let batchPromise: Promise<AppData>;
+  batchPromise = pending.catch((error) => {
+    controller.abort();
+    if (cachedAppData === batchPromise) cachedAppData = undefined;
     throw error;
   });
-  return cachedAppData;
+  cachedAppData = batchPromise;
+  return batchPromise;
 }
 
 export function clearAppDataCache(): void {
   cachedAppData = undefined;
 }
 
-async function loadJson(path: string, fetcher: DataFetcher, baseUrl: string): Promise<unknown> {
+async function loadJson(path: string, fetcher: DataFetcher, baseUrl: string, signal: AbortSignal): Promise<unknown> {
   const url = new URL(path, baseUrl).toString();
   let response: Response;
 
   try {
-    response = await fetcher(url, { cache: "no-cache" });
+    response = await fetcher(url, { cache: "no-cache", signal });
   } catch {
     throw new Error(`Could not load ${path}: network request failed`);
   }

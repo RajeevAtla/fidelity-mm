@@ -104,11 +104,125 @@ describe("application data loader", () => {
     ]);
   });
 
+  test("aborts signal-aware siblings before exposing a retry", async () => {
+    const calls: string[] = [];
+    let firstBatch = true;
+    const firstSignals: Array<AbortSignal | undefined> = [];
+    const fetcher: DataFetcher = async (input, init) => {
+      const url = new URL(String(input));
+      const path = url.pathname;
+      calls.push(path);
+      if (firstBatch) firstSignals.push(init?.signal ?? undefined);
+      if (firstBatch && path.endsWith("allclass.json")) {
+        throw new Error("offline");
+      }
+      if (firstBatch && (path.endsWith("minimums.json") || path.endsWith("tax-rules.json"))) {
+        await new Promise<never>((_, reject) => {
+          const signal = init?.signal;
+          const abort = () => reject(new Error("aborted"));
+          if (signal?.aborted) abort();
+          else signal?.addEventListener("abort", abort, { once: true });
+        });
+      }
+      const body = path.endsWith("allclass.json")
+        ? rateDataJson
+        : path.endsWith("minimums.json")
+          ? minimumDataJson
+          : taxDataJson;
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+
+    const first = loadAppData({ baseUrl: "https://example.test/drain/", fetch: fetcher });
+    await expect(first).rejects.toThrow("Could not load data/fidelity-mm-allclass.json: network request failed");
+    expect(firstSignals.every(Boolean)).toBe(true);
+    expect(new Set(firstSignals).size).toBe(1);
+
+    firstBatch = false;
+    const retry = loadAppData({ baseUrl: "https://example.test/drain/", fetch: fetcher });
+    await retry;
+    expect(calls).toHaveLength(6);
+  });
+
+  test("does not let an old failed batch clear a replacement cache", async () => {
+    const calls: string[] = [];
+    let firstBatch = true;
+    let releaseMinimum!: () => void;
+    let releaseTax!: () => void;
+    let releaseReplacement!: () => void;
+    let signalRateFailure!: () => void;
+    const minimumPending = new Promise<void>((resolve) => {
+      releaseMinimum = resolve;
+    });
+    const taxPending = new Promise<void>((resolve) => {
+      releaseTax = resolve;
+    });
+    const replacementPending = new Promise<void>((resolve) => {
+      releaseReplacement = resolve;
+    });
+    const rateFailure = new Promise<void>((resolve) => {
+      signalRateFailure = resolve;
+    });
+    const fetcher: DataFetcher = async (input) => {
+      const url = new URL(String(input));
+      const path = url.pathname;
+      const batch = firstBatch;
+      calls.push(path);
+      if (batch && path.endsWith("allclass.json")) {
+        signalRateFailure();
+        throw new Error("offline");
+      }
+      if (batch && path.endsWith("minimums.json")) await minimumPending;
+      if (batch && path.endsWith("tax-rules.json")) await taxPending;
+      if (!batch) await replacementPending;
+      const body = path.endsWith("allclass.json")
+        ? rateDataJson
+        : path.endsWith("minimums.json")
+          ? minimumDataJson
+          : taxDataJson;
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+
+    const first = loadAppData({ baseUrl: "https://example.test/identity/", fetch: fetcher });
+    let firstError: Error | undefined;
+    const firstHandled = first.catch((error: Error) => {
+      firstError = error;
+    });
+    await rateFailure;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    clearAppDataCache();
+    firstBatch = false;
+    const replacement = loadAppData({ baseUrl: "https://example.test/identity/", fetch: fetcher });
+    expect(calls).toHaveLength(6);
+
+    releaseMinimum();
+    releaseTax();
+    await firstHandled;
+    expect(firstError?.message).toBe("Could not load data/fidelity-mm-allclass.json: network request failed");
+
+    releaseReplacement();
+    await replacement;
+    const concurrent = loadAppData({ baseUrl: "https://example.test/identity/", fetch: fetcher });
+    expect(concurrent).toBe(replacement);
+    expect(calls).toHaveLength(6);
+  });
+
   test("surfaces malformed fetched documents through the data boundary", async () => {
     const fetcher: DataFetcher = async (input) => {
       const url = new URL(String(input));
       const body = url.pathname.endsWith("minimums.json")
-        ? { checkedAt: "2026-08-16T00:00:00.000Z", count: 0, funds: { FNSXX: {} } }
+        ? {
+            source: "https://example.test/source",
+            checkedAt: "2026-08-16T00:00:00.000Z",
+            count: 1,
+            funds: {
+              FNSXX: {
+                minimumInvestment: 0,
+                sourceUrl: "https://example.test/fund",
+                status: "verified",
+              },
+            },
+          }
         : url.pathname.endsWith("allclass.json")
           ? rateDataJson
           : taxDataJson;
