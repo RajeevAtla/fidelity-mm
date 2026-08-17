@@ -9,12 +9,15 @@ The project is built as a static web application. Fund data is stored in the rep
 - A comparison table and bar-chart view for Fidelity money market funds.
 - Current yield data for available fund classes.
 - Minimum investment requirements for each fund.
-- Tax-equivalent yield calculations based on filing status and income.
+- Tax-equivalent yield calculations based on selected federal and resident-state marginal brackets.
 - Federal and resident-state tax bracket selection with estimated after-tax yield comparisons.
-- Search, filtering, sorting, and fund-category controls.
+- Fund-category filters with results automatically ordered by estimated after-tax yield.
+- Source links for each fund and calculation details for the current winner.
+- An editable non-negative balance for the annual value estimate, defaulting to $10M.
+- Shareable scenario URLs for resident state, tax brackets, category, balance, and expanded results.
+- An in-page retry action when the current data cannot be loaded.
 - Light and dark display themes.
 - Responsive layouts for desktop, tablet, and mobile screens.
-- Links to the corresponding Fidelity fund research pages.
 
 The figures shown in the application are informational comparisons. They are not investment recommendations, tax advice, or a guarantee of future performance. Rates, fund policies, tax rules, and eligibility requirements can change.
 
@@ -43,6 +46,7 @@ The figures shown in the application are informational comparisons. They are not
 | `src/scripts/fidelity/scrape-fidelity-mm.ts` | Refreshes yield and fund-class data from Fidelity's published fund listings. |
 | `src/scripts/fidelity/scrape-fidelity-mm-minimums.ts` | Uses Fidelity fund numbers to refresh minimum investment data. |
 | `src/scripts/fidelity/scrape-fidelity-mm-tax.ts` | Downloads Fidelity's annual tax letter and refreshes tax rules for every fund. |
+| `src/scripts/check-bundle-budget.ts` | Checks the existing production output against raw, gzip, and Brotli size limits. |
 | `tests/unit/` and `tests/e2e/` | Unit and Playwright tests for the application and refresh scripts. |
 | `farm.config.ts` | Farm build configuration, including the deployment base path. |
 | `.github/workflows/data.yml` | Scheduled and manual data-refresh workflow. |
@@ -95,12 +99,21 @@ bun run preview
 
 The build output is written to `dist/`. It is safe to remove and regenerate this directory.
 
+Check a completed build without rebuilding it:
+
+```sh
+bun run check:bundle
+```
+
+The guard reports actual and maximum total sizes for raw, gzip, and Brotli, summing each emitted file in `dist/`. It fails if raw output exceeds 190,000 bytes, gzip exceeds 74,000 bytes, or Brotli exceeds 68,000 bytes.
+
 ## Available package scripts
 
 | Command | Description |
 | --- | --- |
 | `bun run dev` | Starts the local development server. |
 | `bun run build` | Generates Tailwind CSS and creates a production Farm build. |
+| `bun run check:bundle` | Checks the existing `dist/` output against the raw, gzip, and Brotli bundle budgets without rebuilding. |
 | `bun run typecheck` | Type-checks the app, tests, and data scripts. |
 | `bun run preview` | Serves the production build for local inspection. |
 | `bun run scrape:fidelity` | Refreshes the yield and fund-class data file. |
@@ -175,11 +188,11 @@ To perform a manual refresh:
 3. Choose **Run workflow** on the `main` branch.
 4. Review the resulting data commit and workflow logs.
 
-A successful refresh triggers the deployment workflow after its data commit reaches `main`. The data workflow requires write access to repository contents because it commits refreshed JSON files.
+A successful refresh triggers the deployment workflow through its `workflow_run` path because the default `GITHUB_TOKEN` commit does not start a `push` workflow. Normal commits to `main` use the `push` trigger, and the data workflow requires write access to repository contents because it commits refreshed JSON files.
 
 ## Tax calculations
 
-Federal and state tax brackets are maintained in `tax-brackets.ts`. The application uses single-filer marginal-rate selections rather than calculating a complete tax return. All 50 states are selectable, including Alaska, Florida, Nevada, New Hampshire, South Dakota, Tennessee, Texas, and Wyoming as zero ordinary-income-tax states. Washington's separate capital-gains tax is not applied to money-market yield income. Arkansas uses the separate lower-income tax-table schedule cited by the 2026 source; the app does not determine eligibility for Arkansas's alternate high-income schedule or model its deductions, credits, or exemptions. Keep the tax year and all bracket values together so a future update can be made in one place.
+Federal and state tax brackets are maintained in `src/domain/tax-brackets.ts`. The application uses single-filer marginal-rate selections rather than calculating a complete tax return. All 50 states are selectable, including Alaska, Florida, Nevada, New Hampshire, South Dakota, Tennessee, Texas, and Wyoming as zero ordinary-income-tax states. Washington's separate capital-gains tax is not applied to money-market yield income. Arkansas uses the separate lower-income tax-table schedule cited by the 2026 source; the app does not determine eligibility for Arkansas's alternate high-income schedule or model its deductions, credits, or exemptions. Keep the tax year and all bracket values together so a future update can be made in one place.
 
 When updating tax rules:
 
@@ -192,6 +205,16 @@ When updating tax rules:
 
 Tax calculations are estimates based on the selected federal and resident-state marginal brackets. Local taxes, deductions, credits, account type, capital-gains scenarios, and individual circumstances are outside the scope of the comparison.
 
+## Comparison controls and sharing
+
+Funds are automatically ordered by estimated after-tax yield for the selected brackets and category. The interface does not provide free-text search or user-selectable sorting. Category buttons filter the comparison without changing the calculation model.
+
+Each fund ticker links to its Fidelity fund research source. The current winner's calculation details show its gross yield, federal and state rates, exemption percentage, tax-year inputs, and resulting after-tax yield. The balance input is a non-negative annual-value scenario control; it defaults to $10M and updates the displayed annual estimate without changing yield ordering.
+
+Scenario state is stored in the URL with these exact query keys: `state`, `fi`, `ni`, `category`, `balance`, and `expanded`. Invalid values fall back to the current defaults. Theme preference remains in the existing local storage setting rather than the scenario URL.
+
+If the three runtime data documents cannot be loaded, the application shows a `Retry loading Fidelity data` button. Retrying runs the existing data-load path again in the page; a full browser refresh is not required.
+
 ## Tax-exemption data
 
 The application reads `data/fidelity-mm-tax-rules.json` rather than maintaining fund rules in the user interface. The refresh script downloads Fidelity's annual percentage-of-income letter, extracts the percentage of eligible income from U.S. government securities, and maps each current rate-sheet symbol to a fund category and government-obligation exemption percentage. The selected resident state determines the treatment of the available state-specific municipal fund categories.
@@ -202,14 +225,15 @@ Fidelity publishes these percentages by tax year. The file records the tax year,
 
 The tax letter is a PDF. The automated workflow installs `poppler-utils` and uses `pdftotext` to extract its table. To run this locally, install Poppler or another distribution that provides the `pdftotext` command before running:
 
-`@sh
+```sh
 bun run scrape:fidelity-tax -- --out data/fidelity-mm-tax-rules.json
-`@
+```
 
 Do not replace a missing annual letter with an estimate. If Fidelity changes the document URL or table labels, update the scraper's source matching and verify the generated values against the published PDF.
+
 ## GitHub Pages deployment
 
-The `.github/workflows/deploy.yml` workflow builds the application and publishes `dist/` to GitHub Pages whenever `main` changes. It can also be started manually.
+The `.github/workflows/deploy.yml` workflow builds the application and publishes `dist/` to GitHub Pages for normal commits pushed to `main`, successful refresh workflow completions, and manual dispatch. Refresh completions use `workflow_run` because their default `GITHUB_TOKEN` commits do not trigger `push` workflows.
 
 The Farm configuration accounts for the repository's project-site path. If the repository name or hosting location changes, review `farm.config.ts` and `index.html` for base paths and asset URLs.
 
@@ -256,7 +280,8 @@ Also inspect the application manually at:
 - Dark mode.
 - A view with long fund names and large minimum values.
 - A view with the smallest and largest yields.
-- A view with no matching search results.
+- A view filtered to each fund category.
+- A view with all results expanded.
 
 For data changes, verify that:
 
@@ -309,5 +334,3 @@ Do not overwrite the minimum data file with empty or partial results.
 ## License and data notice
 
 The source code is released under the [MIT License](LICENSE). Fidelity names, fund names, symbols, yields, and related fund information belong to their respective owners. The project links to Fidelity's public research pages for reference. Always confirm current fund details and eligibility requirements with Fidelity before making a decision.
-
-Fidelity names, fund names, symbols, yields, and related fund information belong to their respective owners. The project links to Fidelity's public research pages for reference. Always confirm current fund details and eligibility requirements with Fidelity before making a decision.

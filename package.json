@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "bun --bun src/scripts/dev.mjs",
     "build": "bun src/scripts/copy-static-data.ts && bunx --bun tailwindcss -i ./src/styles/styles.css -o ./src/styles/tailwind.generated.css && bunx --bun farm build",
+    "check:bundle": "bun src/scripts/check-bundle-budget.ts",
     "preview": "bunx --bun farm preview",
     "scrape:fidelity": "bun src/scripts/fidelity/scrape-fidelity-mm.ts",
     "scrape:fidelity-minimums": "bun src/scripts/fidelity/scrape-fidelity-mm-minimums.ts",

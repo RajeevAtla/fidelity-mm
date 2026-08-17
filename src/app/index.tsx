@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { BAR_WIDTH_CLASSES } from "../domain/bar-widths";
 import type { AppData } from "../data/data-boundary";
 import { ACTIVE_TAX_CONFIG, ACTIVE_TAX_YEAR } from "../domain/tax-brackets";
 import { APP_CONFIG } from "../config/app-config";
-import { calculateAnnualValue, calculateBarWidth } from "../domain/calculations";
+import { calculateAnnualValue, calculateBarWidth, calculateStateExemptPct } from "../domain/calculations";
 import { DataFreshness } from "../ui/freshness";
 import { FundResults } from "../ui/fund-results";
 import {
@@ -25,16 +25,17 @@ import { resolveThemeMode } from "../ui/theme";
 import type { ResolvedTheme, ThemeMode } from "../ui/theme";
 import type { CategoryCode } from "../domain/categories";
 import { SUPPORTED_STATE_CODES, type StateCode } from "../config/app-config";
+import {
+  DEFAULT_SCENARIO,
+  parseScenarioUrl,
+  serializeScenarioUrl,
+  type Scenario,
+} from "./scenario-url";
 
 const THEME_STORAGE_KEY = APP_CONFIG.theme.storageKey;
 const THEME_META_COLORS = APP_CONFIG.theme.metaColors;
 
 const fedB = ACTIVE_TAX_CONFIG.federal.map(({ rate: r, label: l }) => ({ r, l }));
-const initialFederalBracketIndex = Math.min(APP_CONFIG.defaults.federalBracketIndex, Math.max(0, fedB.length - 1));
-const initialStateBracketIndex = Math.min(
-  APP_CONFIG.defaults.stateBracketIndex,
-  Math.max(0, ACTIVE_TAX_CONFIG.states[APP_CONFIG.defaults.state].brackets.length - 1),
-);
 
 const CL = APP_CONFIG.categories.labels;
 const allCats: CategoryFilter[] = ["all", ...APP_CONFIG.categories.order];
@@ -105,10 +106,32 @@ function barWidthClass(value: number) {
   return BAR_WIDTH_CLASSES[Math.max(0, Math.min(100, Math.round(value)))] ?? BAR_WIDTH_CLASSES[0];
 }
 
-function formatAnnualValue(afterTaxYield: number) {
-  return calculateAnnualValue(afterTaxYield, APP_CONFIG.display.annualBalance).toLocaleString(undefined, {
+function formatAnnualValue(afterTaxYield: number, balance: number) {
+  return calculateAnnualValue(afterTaxYield, balance).toLocaleString(undefined, {
     maximumFractionDigits: 0,
   });
+}
+
+function getInitialScenario(): Scenario {
+  return typeof window === "undefined" ? DEFAULT_SCENARIO : parseScenarioUrl(window.location.search);
+}
+
+function scenariosEqual(left: Scenario, right: Scenario) {
+  return left.state === right.state
+    && left.fi === right.fi
+    && left.ni === right.ni
+    && left.category === right.category
+    && left.balance === right.balance
+    && left.expanded === right.expanded;
+}
+
+function syncScenarioUrl(scenario: Scenario) {
+  const params = serializeScenarioUrl(scenario);
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${window.location.pathname}?${params.toString()}${window.location.hash}`,
+  );
 }
 
 function buttonClasses(active: boolean, tone?: string) {
@@ -125,15 +148,19 @@ export default function App(props: {
   initialThemeMode: ThemeMode;
   onResidentStateChange?: (state: StateCode) => void;
 }) {
+  const [scenarioAtLoad] = useState<Scenario>(() => getInitialScenario());
   const [themeMode, setThemeMode] = useState<ThemeMode>(props.initialThemeMode);
-  const [state, setState] = useState<StateCode>(APP_CONFIG.defaults.state);
+  const [state, setState] = useState<StateCode>(scenarioAtLoad.state);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
     resolveThemeMode("system", getSystemThemePreference()),
   );
-  const [fi, setFi] = useState(initialFederalBracketIndex);
-  const [ni, setNi] = useState(initialStateBracketIndex);
-  const [fc, setFc] = useState<CategoryFilter>("all");
-  const [showAll, setShowAll] = useState(false);
+  const [fi, setFi] = useState(scenarioAtLoad.fi);
+  const [ni, setNi] = useState(scenarioAtLoad.ni);
+  const [fc, setFc] = useState<CategoryFilter>(scenarioAtLoad.category);
+  const [balance, setBalance] = useState(scenarioAtLoad.balance);
+  const [showAll, setShowAll] = useState(scenarioAtLoad.expanded);
+  const currentScenarioRef = useRef<Scenario>(scenarioAtLoad);
+  const pendingHistoryScenarioRef = useRef<Scenario | null>(null);
   const { rateSheet, minimumData, taxData } = props.data;
   const funds = useMemo(
     () => buildFunds(rateSheet, taxData.funds, minimumData.funds),
@@ -147,10 +174,48 @@ export default function App(props: {
   const resolvedTheme = themeMode === "system" ? systemTheme : themeMode;
   const fr = fedB[fi].r;
   const nr = stateB[stateBracketIndex]?.r ?? 0;
+  currentScenarioRef.current = { state, fi, ni: stateBracketIndex, category: fc, balance, expanded: showAll };
 
   useEffect(() => {
     writeStoredThemeMode(THEME_STORAGE_KEY, themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    props.onResidentStateChange?.(state);
+  }, [props.onResidentStateChange, state]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextScenario = parseScenarioUrl(window.location.search);
+      pendingHistoryScenarioRef.current = nextScenario;
+      if (scenariosEqual(currentScenarioRef.current, nextScenario)) {
+        pendingHistoryScenarioRef.current = null;
+        syncScenarioUrl(nextScenario);
+        return;
+      }
+      setState(nextScenario.state);
+      setFi(nextScenario.fi);
+      setNi(nextScenario.ni);
+      setFc(nextScenario.category);
+      setBalance(nextScenario.balance);
+      setShowAll(nextScenario.expanded);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const pendingScenario = pendingHistoryScenarioRef.current;
+    if (pendingScenario) {
+      if (scenariosEqual(currentScenarioRef.current, pendingScenario)) {
+        pendingHistoryScenarioRef.current = null;
+        syncScenarioUrl(currentScenarioRef.current);
+      }
+      return;
+    }
+    syncScenarioUrl(currentScenarioRef.current);
+  }, [balance, fc, fi, showAll, state, stateBracketIndex]);
 
   useEffect(() => {
     applyThemeToDocument(resolvedTheme, THEME_META_COLORS);
@@ -175,6 +240,7 @@ export default function App(props: {
   const top = res[0];
   const summary = useMemo(() => getWinnerMatrix(funds, fedB, stateB, state), [funds, state, stateB]);
   const categoryCounts = useMemo(() => countFundsByCategory(funds), [funds]);
+  const topExemptionPct = top ? calculateStateExemptPct(state, top.c, top.ge) : 0;
 
   const filterCount = (category: CategoryFilter) =>
     category === "all" ? "" : `(${categoryCounts[category] ?? 0})`;
@@ -202,7 +268,6 @@ export default function App(props: {
               onChange={(event) => {
                 const nextState = (event.currentTarget as HTMLSelectElement).value as StateCode;
                 setState(nextState);
-                props.onResidentStateChange?.(nextState);
                 setNi(Math.min(APP_CONFIG.defaults.stateBracketIndex, ACTIVE_TAX_CONFIG.states[nextState].brackets.length - 1));
               }}
               className="rounded border border-btn-border bg-btn-bg px-2 py-[5px] text-[11px] font-semibold text-btn-text"
@@ -346,15 +411,43 @@ export default function App(props: {
                 </div>
               </div>
 
-              <div className="rounded-md border border-success-border bg-page px-3 py-2 text-right">
-                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
-                  After-tax yield
+              <div className="flex max-w-full flex-wrap items-end justify-end gap-3">
+                <div className="rounded-md border border-success-border bg-page px-3 py-2 text-left">
+                  <label htmlFor="annual-balance" className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                    Annual balance
+                  </label>
+                  <div className="mt-1 flex max-w-full items-center rounded border border-btn-border bg-btn-bg text-btn-text">
+                    <span className="pl-2 text-[12px]" aria-hidden="true">$</span>
+                    <input
+                      id="annual-balance"
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputMode="decimal"
+                      value={balance}
+                      aria-describedby="annual-balance-help"
+                      onInput={(event) => {
+                        const value = (event.currentTarget as HTMLInputElement).valueAsNumber;
+                        setBalance(Number.isFinite(value) ? Math.max(0, value) : 0);
+                      }}
+                      className="min-w-0 w-[9rem] max-w-full bg-transparent px-2 py-1 text-right text-[12px] font-semibold outline-none"
+                    />
+                  </div>
+                  <div id="annual-balance-help" className="mt-1 text-[9px] text-muted">
+                    Used for the annual-value estimate.
+                  </div>
                 </div>
-                <div className="font-display text-[26px] font-bold leading-none text-success-text">
-                  {top.a.toFixed(3)}%
-                </div>
-                <div className="mt-1 text-[10px] text-muted">
-                  Winner at current brackets
+
+                <div className="rounded-md border border-success-border bg-page px-3 py-2 text-right">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
+                    After-tax yield
+                  </div>
+                  <div className="font-display text-[26px] font-bold leading-none text-success-text">
+                    {top.a.toFixed(3)}%
+                  </div>
+                  <div className="mt-1 text-[10px] text-muted">
+                    Winner at current brackets
+                  </div>
                 </div>
               </div>
             </div>
@@ -380,13 +473,54 @@ export default function App(props: {
               </div>
               <div className="bg-page px-3 py-2">
                 <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted">
-                  On $10M
+                  Annual value
                 </div>
                 <div className="text-[12px] font-semibold text-success-text">
-                  ≈ ${formatAnnualValue(top.a)}/yr
+                  ≈ ${formatAnnualValue(top.a, balance)}/yr
                 </div>
               </div>
             </div>
+
+            <details className="border-t border-success-border/70 px-3 py-2">
+              <summary className="cursor-pointer text-[11px] font-semibold text-success-text">
+                How this winner is calculated
+              </summary>
+              <div className="mt-2 max-w-3xl break-words text-[11px] leading-[1.45] text-muted">
+                <p className="m-0">
+                  The existing model treats money-market yield as ordinary income. It uses {ACTIVE_TAX_YEAR} bracket rates and {taxData.taxYear} allocation/exemption data, then applies federal tax to taxable income and state tax to the portion not covered by the exemption; municipal funds are not charged federal tax. The winner is the highest resulting after-tax yield.
+                </p>
+                <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                  <div className="flex justify-between gap-3">
+                    <dt>Gross 7-day yield</dt>
+                    <dd className="m-0 font-semibold text-text">{top.y.toFixed(2)}%</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Federal rate</dt>
+                    <dd className="m-0 font-semibold text-text">{fr}%</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>State rate</dt>
+                    <dd className="m-0 font-semibold text-text">{nr}%</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Exemption percentage</dt>
+                    <dd className="m-0 font-semibold text-text">{topExemptionPct.toFixed(2)}%</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Bracket inputs year</dt>
+                    <dd className="m-0 font-semibold text-text">{ACTIVE_TAX_YEAR}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Allocation/exemption data year</dt>
+                    <dd className="m-0 font-semibold text-text">{taxData.taxYear}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Resulting after-tax yield</dt>
+                    <dd className="m-0 font-semibold text-success-text">{top.a.toFixed(3)}%</dd>
+                  </div>
+                </dl>
+              </div>
+            </details>
           </div>
         )}
 

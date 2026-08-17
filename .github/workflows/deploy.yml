@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Bot pushes are intentionally suppressed by GitHub's token rules, so
+  # workflow_run is the single refresh deployment path; normal main commits use push.
   workflow_run:
     workflows: ["Refresh Fidelity Data", "Refresh Fidelity Tax Data"]
     types: [completed]

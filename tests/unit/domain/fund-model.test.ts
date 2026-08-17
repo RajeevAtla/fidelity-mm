@@ -64,6 +64,7 @@ const fund = (t: string, c: Fund["c"], y: number, ge = 0): Fund => ({
   c,
   ge,
   mn: "1M",
+  sourceUrl: "source",
 });
 
 const result = (t: string, c: Fund["c"], a: number): FundResult => ({
@@ -99,6 +100,7 @@ describe("fund model", () => {
         c: "g",
         ge: 0,
         mn: "$1M",
+        sourceUrl: "source",
       },
     ]);
   });
