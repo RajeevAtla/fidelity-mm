@@ -188,7 +188,7 @@ To perform a manual refresh:
 3. Choose **Run workflow** on the `main` branch.
 4. Review the resulting data commit and workflow logs.
 
-A successful refresh triggers the deployment workflow after its data commit reaches `main`. The data workflow requires write access to repository contents because it commits refreshed JSON files.
+A successful refresh triggers the deployment workflow through its `workflow_run` path because the default `GITHUB_TOKEN` commit does not start a `push` workflow. Normal commits to `main` use the `push` trigger, and the data workflow requires write access to repository contents because it commits refreshed JSON files.
 
 ## Tax calculations
 
@@ -233,7 +233,7 @@ Do not replace a missing annual letter with an estimate. If Fidelity changes the
 
 ## GitHub Pages deployment
 
-The `.github/workflows/deploy.yml` workflow builds the application and publishes `dist/` to GitHub Pages whenever `main` changes. It can also be started manually.
+The `.github/workflows/deploy.yml` workflow builds the application and publishes `dist/` to GitHub Pages for normal commits pushed to `main`, successful refresh workflow completions, and manual dispatch. Refresh completions use `workflow_run` because their default `GITHUB_TOKEN` commits do not trigger `push` workflows.
 
 The Farm configuration accounts for the repository's project-site path. If the repository name or hosting location changes, review `farm.config.ts` and `index.html` for base paths and asset URLs.
 
