@@ -433,3 +433,218 @@ This is an integration-discovered reproducibility fix; the expected implementati
 - 2026-08-16: Pushed 9cac143 and opened PR #9. Automatic scanning is disabled, the missing live `fund-results.tsx` source is explicit, unrelated-token utilities are removed, full checks pass, and final combined output measures 172,968 raw / 68,036 gzip / 62,862 Brotli bytes.
 - 2026-08-16: Terra audited every live utility-string source and dynamic candidate, reproduced the isolation probe and final measurements, passed full checks, and approved PR #9 with no findings.
 - 2026-08-16: PR #9 merged to main as 7a85faf after CI success and Terra approval; Luna pane closed.
+
+## TASK-008: Improve trust, resilience, UX, and safeguards
+**Status:** MERGED
+**Priority:** P1
+**Owner:** orchestrator
+**Reviewer:** reviewer-task-008a, reviewer-task-008b, reviewer-task-008c
+**Depends on:** TASK-007
+**Blocks:** none
+**Worktree:** multiple child worktrees
+**Branch:** multiple child branches
+**PR:** #10, #11, #12, #13
+
+### Objective
+Improve the static application's data resilience, financial transparency, scenario usability, responsive accessibility, deployment efficiency, documentation accuracy, and bundle-regression protection without pinning CI tooling or changing the architecture.
+
+### Scope
+Deliver TASK-008A, TASK-008B, and TASK-008C in parallel with disjoint file ownership and integrate only after independent Terra approval.
+
+### Non-goals
+Do not pin Bun or GitHub Actions, add a backend/database/accounts/service worker, change frameworks, support additional filing statuses, or perform speculative refactors.
+
+### Requirements
+- Keep the application static and preserve current calculation semantics and data-refresh paths.
+- Prefer native browser controls and existing dependencies.
+- Preserve `/fidelity-mm/` base-path behavior and current theme behavior.
+- Add focused tests for every new behavior.
+
+### Acceptance criteria
+- [x] Runtime data failures can be retried in-page and all consumed fields are validated.
+- [x] Users can inspect sources and calculation inputs, edit balance, and share a scenario URL.
+- [x] Mobile and keyboard behavior has browser coverage.
+- [x] Refresh deployments use their required single effective path and CI enforces a tolerant bundle budget.
+- [x] README matches actual behavior and formatting defects are fixed.
+- [x] Full checks pass and all Terra reviewers approve.
+- [x] All child PRs merge into `main` and final validation passes.
+
+### Interfaces / contracts
+TASK-008B query parameters: `state`, `fi`, `ni`, `category`, `balance`, and `expanded`; invalid values fall back to current defaults. Theme remains in existing local storage. TASK-008C documents this exact UI contract after TASK-008B lands.
+
+### Verification
+Full unit/type/data/build/E2E suite, bundle budget, focused retry tests, scenario URL round-trip, source/calculation UI checks, mobile overflow, keyboard controls, and post-integration smoke validation.
+
+### Notes / risks
+Parallel slices must not edit each other's owned files. Orchestrator resolves only integration-level conflicts.
+
+### Progress log
+- 2026-08-16: User requested every non-CI-pinning improvement with all implementation workers launched in parallel.
+- 2026-08-17: PRs #10, #11, #12, and #13 merged after independent review and revision loops. Final main passed 94 unit tests, typecheck, 40/40/40 data validation, build, bundle budget, focused retry E2E, 10 full Chromium E2E tests, GitHub CI, and GitHub Pages deployment at ab9ec22.
+
+## TASK-008A: Strengthen data resilience and year validation
+**Status:** MERGED
+**Priority:** P1
+**Owner:** worker-task-008a
+**Reviewer:** reviewer-task-008a
+**Depends on:** TASK-007
+**Blocks:** TASK-008
+**Worktree:** C:\fidelity-mm-reliability
+**Branch:** agent/TASK-008A-data-resilience
+**PR:** https://github.com/RajeevAtla/fidelity-mm/pull/11
+
+### Objective
+Validate every runtime-consumed data field and let users retry a failed three-document load without refreshing the page.
+
+### Scope
+- Own `src/app/main.tsx`, `src/data/data-boundary.ts`, supported tax-allocation-year validation, and focused unit/E2E tests in new or data-specific files.
+- Validate finite/ranged consumed values, tax year, provenance needed by the UI contract, and supported allocation-year relation to `ACTIVE_TAX_YEAR`.
+- Refactor startup minimally so `DataUnavailable` exposes a native Retry button that uses the existing loader retry contract.
+
+### Non-goals
+Do not edit comparison UI files, app scenario state, README, package scripts, or workflows.
+
+### Requirements
+- Loading, retrying, success, network failure, malformed data, and render errors remain distinct and safe.
+- Do not expose internal error details in the user-visible screen.
+- Existing static data remains valid: allocation year 2025 is supported with active bracket year 2026.
+
+### Acceptance criteria
+- [x] A failed load can recover through an in-page Retry button.
+- [x] Invalid consumed fields and unsupported tax years fail at the runtime boundary.
+- [x] Unit, type, data, build, focused E2E, and full E2E checks pass.
+
+### Interfaces / contracts
+`loadAppData` and `clearAppDataCache` signatures remain compatible. The unavailable screen exposes a button named `Retry loading Fidelity data`.
+
+### Verification
+Boundary tests, failed-then-successful browser retry, existing loader tests, full project checks.
+
+### Notes / risks
+`validate-fidelity-data.ts` already permits current or prior-year allocation data; share or mirror that exact policy without requiring equality.
+
+### Progress log
+- 2026-08-16: Parallel slice defined with exclusive ownership of startup and data-boundary paths.
+- 2026-08-16: Assigned to worker-task-008a in isolated worktree C:\fidelity-mm-reliability.
+- 2026-08-17: Worker pushed 8e13277, 159aec2, and 1e5ff61 and opened PR #11. Strict boundary/year-policy checks, in-page retry, 84 unit tests, 6 E2E tests, full checks, and CI passed.
+- 2026-08-17: Terra requested changes: prevent a retry from starting before the failed batch's delayed sibling requests settle or are canceled, and add a regression proving no overlap.
+- 2026-08-17: Worker pushed d956e35, changed batch coordination to drain all sibling requests before exposing retry, added the delayed-sibling regression, and passed 85 unit tests, 6 E2E tests, full checks, and CI.
+- 2026-08-17: Terra confirmed overlap was fixed but found two MAJOR races: a hung sibling suppresses retry indefinitely, and an obsolete failed batch can clear a newer cache after explicit cache clearing.
+- 2026-08-17: Worker pushed 95866c0 with per-batch abort cancellation, promise-identity cache clearing, and regressions for hung siblings and obsolete batches. Local 86 unit/6 E2E/full checks pass; integrated CI is blocked only by the provisional raw bundle threshold.
+- 2026-08-17: Terra verified sibling cancellation, original-error preservation, cache-identity safety, focused regressions, and full local checks; TASK-008A logic approved pending integrated budget calibration and current-main merge.
+- 2026-08-17: Final bundle calibration merged; returned TASK-008A to its Luna worker to merge current main and run combined validation before final Terra integration review.
+- 2026-08-17: Worker pushed normal merge head 5daa703 with no conflicts; 94 unit tests, typecheck, data validation, build, calibrated bundle budget, focused retry E2E, 10 full E2E tests, and CI passed. Final integrated output is 183,583 raw / 70,771 gzip / 65,242 Brotli.
+- 2026-08-17: Terra confirmed the merge preserved approved loader behavior, source-link trust boundary, calibrated budget, focused retry, full integrated E2E, and CI; PR #11 approved with no findings.
+- 2026-08-17: PR #11 merged to main as ab9ec22 after final Terra approval and CI success; Luna pane closed.
+
+## TASK-008B: Add transparent shareable comparison UX
+**Status:** MERGED
+**Priority:** P1
+**Owner:** worker-task-008b
+**Reviewer:** reviewer-task-008b
+**Depends on:** TASK-007
+**Blocks:** TASK-008
+**Worktree:** C:\fidelity-mm-product
+**Branch:** agent/TASK-008B-product-trust
+**PR:** https://github.com/RajeevAtla/fidelity-mm/pull/12
+
+### Objective
+Make comparison scenarios auditable, source-linked, balance-aware, shareable, and covered on mobile and keyboard paths.
+
+### Scope
+- Own `src/app/index.tsx`, new scenario URL helpers, `src/domain/fund-model.ts`, `src/ui/fund-results.tsx`, `src/config/app-config.ts`, and product-focused unit/E2E tests.
+- Link each fund ticker to its existing Fidelity minimum/source URL.
+- Add a native calculation-details disclosure for the current winner showing gross yield, federal/state rates, exemption percentage, tax year inputs, and resulting after-tax yield.
+- Replace the fixed annual balance presentation with a native non-negative numeric input defaulting to the current $10M.
+- Initialize and synchronize `state`, `fi`, `ni`, `category`, `balance`, and `expanded` through `URLSearchParams`, with safe fallbacks and `history.replaceState`.
+- Add focused mobile overflow/responsiveness and keyboard control browser tests.
+
+### Non-goals
+Do not add search, arbitrary sorting, filing statuses, a router, new dependencies, data-loader changes, README edits, or workflow changes.
+
+### Requirements
+- Existing default URL renders current behavior.
+- Invalid query values never crash or escape supported states/brackets/categories/balances.
+- Source links use safe external-link behavior and meaningful accessible names.
+- Calculation disclosure must explain existing math, not introduce a second calculation implementation.
+
+### Acceptance criteria
+- [x] Exact comparison scenarios round-trip through a bookmarkable URL.
+- [x] Fund sources and calculation inputs/results are visible and accessible.
+- [x] Annual value responds to user balance.
+- [x] Mobile and keyboard E2E checks pass with no horizontal page overflow.
+- [x] Full checks pass and Terra approves.
+
+### Interfaces / contracts
+Query keys are fixed as `state`, `fi`, `ni`, `category`, `balance`, and `expanded`. Fund model exposes the Fidelity source URL already present in minimum data. Theme storage is unchanged.
+
+### Verification
+Scenario helper tests, fund-model tests, desktop/mobile/keyboard Playwright checks, full project checks.
+
+### Notes / risks
+Keep `index.tsx` cohesive; extract only pure URL parsing/serialization logic that merits direct tests.
+
+### Progress log
+- 2026-08-16: Parallel slice defined with exclusive ownership of comparison UI and scenario state.
+- 2026-08-16: Assigned to worker-task-008b in isolated worktree C:\fidelity-mm-product.
+- 2026-08-17: Worker pushed five coherent commits through 3437053 and opened PR #12. Source links, calculation disclosure, editable balance, URL scenarios, mobile/keyboard coverage, 80 unit tests, 8 E2E tests, full checks, and CI passed.
+- 2026-08-17: Terra requested changes: restore scenario state on browser back/forward and display both the active bracket year and allocation/exemption data year in calculation details.
+- 2026-08-17: Worker pushed 64b6e0c with guarded `popstate` restoration and both tax-year inputs, added focused browser regressions, and passed 80 unit tests, 9 E2E tests, full checks, and CI.
+- 2026-08-17: Terra verified all six history-restored fields, loop prevention, both displayed tax years, focused tests, and CI; PR #12 approved with no remaining findings.
+- 2026-08-17: PR #12 merged to main as fafc931 after Terra approval and CI success; Luna pane closed.
+
+## TASK-008C: Add build guardrails and accurate docs
+**Status:** MERGED
+**Priority:** P1
+**Owner:** worker-task-008c
+**Reviewer:** reviewer-task-008c
+**Depends on:** TASK-007
+**Blocks:** TASK-008
+**Worktree:** C:\fidelity-mm-build-guard
+**Branch:** agent/TASK-008C-build-docs
+**PR:** https://github.com/RajeevAtla/fidelity-mm/pull/10; https://github.com/RajeevAtla/fidelity-mm/pull/13
+
+### Objective
+Prevent bundle regressions, preserve correct refresh deployments, and make project documentation match delivered behavior.
+
+### Scope
+- Own `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `package.json`, README, and a minimal dependency-free bundle-budget script plus focused tests if useful.
+- Verify deployment trigger semantics and retain `workflow_run` because default `GITHUB_TOKEN` refresh pushes cannot trigger the `main` push workflow.
+- Add a tolerant post-build budget for total raw/gzip/Brotli output based on the current 172,968/68,036/62,862-byte build; leave practical growth headroom and print useful actual/limit output.
+- Correct README claims: no search or user-selectable sorting; document automatic after-tax sorting, source links, calculation disclosure, editable balance, scenario query parameters, retry behavior, and bundle command.
+- Fix the malformed tax-scraper shell fence and duplicate final data notice.
+
+### Non-goals
+Do not pin Bun, action tags, or dependency versions; do not edit application/data code or product E2E tests.
+
+### Requirements
+- Budget check uses Bun/standard library only and fails nonzero over any threshold.
+- CI runs the budget after build without rebuilding.
+- Deployment still runs for every `main` commit and manual dispatch.
+
+### Acceptance criteria
+- [x] Bundle budget passes current output and has a proving failure-path test or fixture.
+- [x] Exactly one effective deployment path remains for refresh commits.
+- [x] README accurately describes TASK-008B's fixed interface contract.
+- [x] Full relevant checks pass and Terra approves.
+
+### Interfaces / contracts
+Document TASK-008B query keys exactly: `state`, `fi`, `ni`, `category`, `balance`, `expanded`. Final integrated limits are 190,000 raw, 74,000 gzip, and 68,000 Brotli.
+
+### Verification
+Budget pass/failure checks, workflow inspection, README review, full build/type/unit checks.
+
+### Notes / risks
+Do not reintroduce CI version pinning; the user explicitly excluded it.
+
+### Progress log
+- 2026-08-16: Parallel slice defined with exclusive ownership of build workflows, package scripts, budget tooling, and README.
+- 2026-08-16: Assigned to worker-task-008c in isolated worktree C:\fidelity-mm-build-guard.
+- 2026-08-17: Worker pushed 9285a33 and ece3745 and opened PR #10. Bundle pass/failure tests, full checks, E2E, budget measurements, workflow inspection, and CI passed with no pinned tooling.
+- 2026-08-17: Terra blocked removal of `workflow_run`: refresh commits use the default `GITHUB_TOKEN`, whose pushes do not trigger push workflows. Restore the successful refresh trigger and document why each refresh still deploys exactly once.
+- 2026-08-17: Worker pushed 1c0e29b, restored the guarded refresh `workflow_run` deployment path with an explanatory comment, corrected PR wording, and passed full checks and CI without pinning tooling.
+- 2026-08-17: Terra verified refresh, normal push, and manual deployment semantics plus bundle/docs checks and approved PR #10 with no remaining findings.
+- 2026-08-17: PR #10 merged to main as 2073bee after Terra approval and CI success; Luna pane closed.
+- 2026-08-17: Integrated TASK-008B intentionally increased output to 182,274 raw / 70,752 gzip / 65,228 Brotli, exceeding only the provisional 180,000 raw limit. Reopened the original slice for a reviewed final-baseline calibration with comparable growth headroom.
+- 2026-08-17: Three fresh Luna launches crashed in Bun before accepting prompts, so Sol applied the allowed tiny integration calibration in the existing isolated worktree. Commit de62a43 and PR #13 set 190,000/74,000/68,000 limits; current refreshed-data output is 179,747/69,801/64,340 and all local checks pass.
+- 2026-08-17: Terra independently reproduced 5.69-6.02% metric headroom and failure tests; PR #13 merged as e797cfd after approval and CI success.
