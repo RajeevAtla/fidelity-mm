@@ -5,6 +5,7 @@ export type FundResultItem = {
   a: number;
   c: CategoryCode;
   mn: string;
+  sourceUrl: string;
 };
 
 type FundResultsProps = {
@@ -18,6 +19,14 @@ type FundResultsProps = {
 };
 
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
+
+function safeExternalUrl(value: string) {
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 export function FundResults({
   funds,
@@ -40,7 +49,19 @@ export function FundResults({
             className="grid grid-cols-[52px_minmax(0,1fr)_52px_42px] items-center gap-x-1"
           >
             <div className="w-[52px] flex-shrink-0 text-[11px] font-semibold text-text">
-              {fund.t}
+              {safeExternalUrl(fund.sourceUrl) ? (
+                <a
+                  href={fund.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${fund.t} Fidelity fund details (opens in new tab)`}
+                  className="text-text underline decoration-subtle underline-offset-2 hover:text-success-text"
+                >
+                  {fund.t}
+                </a>
+              ) : (
+                fund.t
+              )}
             </div>
             <div
               className="relative h-6 min-w-0 overflow-hidden rounded-md border border-track-border bg-track"
