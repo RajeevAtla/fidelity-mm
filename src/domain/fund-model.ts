@@ -13,6 +13,7 @@ export type Fund = {
   c: CategoryCode;
   ge: number;
   mn: string;
+  sourceUrl: string;
 };
 
 export type FundResult = Fund & { a: number };
@@ -55,6 +56,7 @@ export function buildFunds(
         c: rule.c,
         ge: rule.governmentExemptPct,
         mn: minimum.minimumLabel,
+        sourceUrl: minimum.sourceUrl,
       };
     });
 }
