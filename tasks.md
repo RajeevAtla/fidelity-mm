@@ -7,8 +7,8 @@
 **Reviewer:** reviewer
 **Depends on:** none
 **Blocks:** TASK-004
-**Worktree:** C:\fidelity-mm-refactor
-**Branch:** refactor/modular-pure-boundaries
+**Worktree:** removed (was `C:\fidelity-mm-refactor`)
+**Branch:** deleted (was `refactor/modular-pure-boundaries`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/5
 
 ### Objective
@@ -61,8 +61,8 @@ The PR overlaps TASK-004 in core configuration, calculation, UI, tax scraper, an
 **Reviewer:** reviewer
 **Depends on:** TASK-005
 **Blocks:** none
-**Worktree:** C:\fidelity-mm-all-states
-**Branch:** feat/all-states-tax-support
+**Worktree:** removed (was `C:\fidelity-mm-all-states`)
+**Branch:** deleted (was `feat/all-states-tax-support`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/4
 
 ### Objective
@@ -117,8 +117,8 @@ Eight files overlap TASK-005. Conflict resolution must retain pure module and ru
 **Reviewer:** reviewer
 **Depends on:** none
 **Blocks:** none
-**Worktree:** C:\fidelity-mm-structure
-**Branch:** agent/TASK-006-organize-source-tests
+**Worktree:** removed (was `C:\fidelity-mm-structure`)
+**Branch:** deleted (was `agent/TASK-006-organize-source-tests`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/6
 
 ### Objective
@@ -183,8 +183,8 @@ This is a tightly coupled mechanical move across shared imports and build entry 
 **Reviewer:** reviewer-task-007a, reviewer-task-007b, reviewer-task-007c, reviewer-task-007d
 **Depends on:** TASK-006
 **Blocks:** none
-**Worktree:** multiple child worktrees
-**Branch:** multiple child branches
+**Worktree:** child worktrees removed
+**Branch:** child branches deleted
 **PR:** #7, #8, #9
 
 ### Objective
@@ -231,6 +231,7 @@ External JSON can improve repeat caching without reducing cold total transfer, w
 - 2026-08-16: Sol measured the baseline and recorded optimization order, compatibility constraints, and font-preservation contract.
 - 2026-08-16: User requested parallel Worker/Reviewer systems; Sol decomposed font delivery, data/cache separation, and runtime/CSS optimization into TASK-007A, TASK-007B, and TASK-007C with serialized integration for overlapping files.
 - 2026-08-16: PRs #7, #8, and #9 merged after independent Terra approval. Final main output is 172,968 raw / 68,036 gzip / 62,862 Brotli bytes, improving the 195,052 / 74,167 / 64,069 baseline by 22,084 / 6,131 / 1,207 bytes. Post-merge validation passed 77 unit tests, typecheck, data validation, build, 5 Chromium E2E tests, and diff checks.
+- 2026-08-17: Removed all TASK-007 child worktrees and deleted their local and remote task branches after merged work was preserved on main.
 
 ## TASK-007A: Optimize font delivery
 **Status:** MERGED
@@ -239,8 +240,8 @@ External JSON can improve repeat caching without reducing cold total transfer, w
 **Reviewer:** reviewer-task-007a
 **Depends on:** TASK-006
 **Blocks:** TASK-007
-**Worktree:** C:\fidelity-mm-bundle
-**Branch:** agent/TASK-007A-font-woff2
+**Worktree:** removed (was `C:\fidelity-mm-bundle`)
+**Branch:** deleted (was `agent/TASK-007A-font-woff2`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/7
 
 ### Objective
@@ -286,8 +287,8 @@ Committed WOFF2 binaries are generated artifacts; document provenance and size e
 **Reviewer:** reviewer-task-007b
 **Depends on:** TASK-006
 **Blocks:** TASK-007
-**Worktree:** C:\fidelity-mm-bundle-data
-**Branch:** agent/TASK-007B-external-data
+**Worktree:** removed (was `C:\fidelity-mm-bundle-data`)
+**Branch:** deleted (was `agent/TASK-007B-external-data`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/8
 
 ### Objective
@@ -340,8 +341,8 @@ This slice may touch Farm/package configuration; integrate before TASK-007C if b
 **Reviewer:** reviewer-task-007c
 **Depends on:** TASK-006
 **Blocks:** TASK-007
-**Worktree:** C:\fidelity-mm-bundle-runtime-css
-**Branch:** agent/TASK-007C-runtime-css
+**Worktree:** removed (was `C:\fidelity-mm-bundle-runtime-css`)
+**Branch:** deleted (was `agent/TASK-007C-runtime-css`)
 **PR:** TBD
 
 ### Objective
@@ -388,8 +389,8 @@ This slice may overlap TASK-007A in `styles.css` or TASK-007B in Farm config; re
 **Reviewer:** reviewer-task-007d
 **Depends on:** TASK-007A, TASK-007B
 **Blocks:** TASK-007
-**Worktree:** C:\fidelity-mm-bundle-scan
-**Branch:** agent/TASK-007D-tailwind-source
+**Worktree:** removed (was `C:\fidelity-mm-bundle-scan`)
+**Branch:** deleted (was `agent/TASK-007D-tailwind-source`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/9
 
 ### Objective
@@ -441,8 +442,8 @@ This is an integration-discovered reproducibility fix; the expected implementati
 **Reviewer:** reviewer-task-008a, reviewer-task-008b, reviewer-task-008c
 **Depends on:** TASK-007
 **Blocks:** none
-**Worktree:** multiple child worktrees
-**Branch:** multiple child branches
+**Worktree:** child worktrees removed
+**Branch:** child branches deleted
 **PR:** #10, #11, #12, #13
 
 ### Objective
@@ -481,6 +482,7 @@ Parallel slices must not edit each other's owned files. Orchestrator resolves on
 ### Progress log
 - 2026-08-16: User requested every non-CI-pinning improvement with all implementation workers launched in parallel.
 - 2026-08-17: PRs #10, #11, #12, and #13 merged after independent review and revision loops. Final main passed 94 unit tests, typecheck, 40/40/40 data validation, build, bundle budget, focused retry E2E, 10 full Chromium E2E tests, GitHub CI, and GitHub Pages deployment at ab9ec22.
+- 2026-08-17: Removed all TASK-008 implementation/review worktrees and deleted their local and remote task branches after merged work was preserved on main.
 
 ## TASK-008A: Strengthen data resilience and year validation
 **Status:** MERGED
@@ -489,8 +491,8 @@ Parallel slices must not edit each other's owned files. Orchestrator resolves on
 **Reviewer:** reviewer-task-008a
 **Depends on:** TASK-007
 **Blocks:** TASK-008
-**Worktree:** C:\fidelity-mm-reliability
-**Branch:** agent/TASK-008A-data-resilience
+**Worktree:** removed (was `C:\fidelity-mm-reliability`)
+**Branch:** deleted (was `agent/TASK-008A-data-resilience`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/11
 
 ### Objective
@@ -544,8 +546,8 @@ Boundary tests, failed-then-successful browser retry, existing loader tests, ful
 **Reviewer:** reviewer-task-008b
 **Depends on:** TASK-007
 **Blocks:** TASK-008
-**Worktree:** C:\fidelity-mm-product
-**Branch:** agent/TASK-008B-product-trust
+**Worktree:** removed (was `C:\fidelity-mm-product`)
+**Branch:** deleted (was `agent/TASK-008B-product-trust`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/12
 
 ### Objective
@@ -600,8 +602,8 @@ Keep `index.tsx` cohesive; extract only pure URL parsing/serialization logic tha
 **Reviewer:** reviewer-task-008c
 **Depends on:** TASK-007
 **Blocks:** TASK-008
-**Worktree:** C:\fidelity-mm-build-guard
-**Branch:** agent/TASK-008C-build-docs
+**Worktree:** removed (was `C:\fidelity-mm-build-guard`)
+**Branch:** deleted (was `agent/TASK-008C-build-docs`)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/10; https://github.com/RajeevAtla/fidelity-mm/pull/13
 
 ### Objective
