@@ -10,6 +10,8 @@ import type {
   TaxData as TaxDataContract,
   TaxRule as TaxRuleContract,
 } from "../../data/data-contracts";
+import { isSafeSourceUrl } from "../../data/data-boundary";
+import { isSupportedTaxAllocationYear } from "../../data/tax-year-policy";
 import { categoryFor } from "./fidelity-tax-utils";
 
 export type RateFund = Partial<RateFundContract>;
@@ -35,6 +37,10 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
   ] as const) {
     if (!validIsoTimestamp(value)) errors.push(`${label}: missing or invalid top-level checkedAt`);
   }
+  if (!isSafeSourceUrl(rateData.sourceUrl)) errors.push("Rate sheet: missing or invalid sourceUrl");
+  if (!isSafeSourceUrl(rateData.apiUrl)) errors.push("Rate sheet: missing or invalid apiUrl");
+  if (!isSafeSourceUrl(minimumData.source)) errors.push("Minimum data: missing or invalid source");
+  if (!isSafeSourceUrl(taxData.sourceUrl)) errors.push("Tax data: missing or invalid sourceUrl");
   if (validIsoTimestamp(rateData.checkedAt)) {
     const checkedAge = ageInDays(new Date(rateData.checkedAt), now);
     if (checkedAge < -1) errors.push("Rate sheet: checkedAt is in the future");
@@ -89,7 +95,7 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
     if (minimum) {
       if (!inRange(minimum.minimumInvestment, 0, 1e9)) errors.push(symbol + ": invalid minimum investment");
       if (!minimum.minimumLabel) errors.push(symbol + ": missing minimum label");
-      if (!minimum.sourceUrl || minimum.status !== "verified") errors.push(symbol + ": minimum is not verified");
+      if (!isSafeSourceUrl(minimum.sourceUrl) || minimum.status !== "verified") errors.push(symbol + ": minimum is not verified");
       if ("scrapedAt" in minimum) errors.push(symbol + ": minimum has a legacy per-fund scrapedAt");
     }
     if (tax) {
@@ -100,13 +106,13 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
       if (!finite(tax.governmentExemptPct) || tax.governmentExemptPct < 0 || tax.governmentExemptPct > 100) {
         errors.push(symbol + ": invalid government-obligation exemption percentage");
       }
-      if (!tax.sourceUrl) errors.push(symbol + ": incomplete tax provenance");
+      if (!isSafeSourceUrl(tax.sourceUrl)) errors.push(symbol + ": incomplete tax provenance");
       if ("scrapedAt" in tax) errors.push(symbol + ": tax rule has a legacy per-fund scrapedAt");
     }
   }
   if (!Number.isInteger(taxData.taxYear) || (taxData.taxYear as number) < 2020) {
     errors.push("Tax data is missing a valid tax year");
-  } else if ((taxData.taxYear as number) > ACTIVE_TAX_YEAR || ACTIVE_TAX_YEAR - (taxData.taxYear as number) > 1) {
+  } else if (!isSupportedTaxAllocationYear(taxData.taxYear)) {
     errors.push(`Tax data year ${taxData.taxYear} is outside the supported ${ACTIVE_TAX_YEAR} allocation-data window`);
   }
 

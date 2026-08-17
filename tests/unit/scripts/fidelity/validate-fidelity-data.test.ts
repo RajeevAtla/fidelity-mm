@@ -43,4 +43,20 @@ describe("Fidelity data validation", () => {
 
     expect(validateData(rate, minimum, tax, now)).toContain("Duplicate rate-sheet symbols: FNSXX");
   });
+
+  test("rejects allocation data older than the active or prior year", () => {
+    const { rate, minimum, tax } = data();
+    tax.taxYear = 2024;
+
+    expect(validateData(rate, minimum, tax, now)).toContain(
+      "Tax data year 2024 is outside the supported 2026 allocation-data window",
+    );
+  });
+
+  test("rejects unsafe provenance URLs", () => {
+    const { rate, minimum, tax } = data();
+    minimum.funds!.FNSXX!.sourceUrl = "javascript:alert(1)";
+
+    expect(validateData(rate, minimum, tax, now)).toContain("FNSXX: minimum is not verified");
+  });
 });

@@ -8,7 +8,7 @@ function appData() {
   return {
     rate: structuredClone(rateDataJson) as { funds: Array<Record<string, unknown>> },
     minimum: structuredClone(minimumDataJson) as { funds: Record<string, Record<string, unknown>> },
-    tax: structuredClone(taxDataJson) as { funds: Record<string, Record<string, unknown>> },
+    tax: structuredClone(taxDataJson) as { taxYear: number; funds: Record<string, Record<string, unknown>> },
   };
 }
 
@@ -45,6 +45,42 @@ describe("runtime app data boundary", () => {
 
     expect(() => parseAppData(data.rate, data.minimum, data.tax)).toThrow(
       "Invalid tax data: funds.FNSXX.c must be a supported category code",
+    );
+  });
+
+  test("rejects out-of-range values consumed by the comparison", () => {
+    const data = appData();
+    data.rate.funds[0].sevenDayYield = 101;
+
+    expect(() => parseAppData(data.rate, data.minimum, data.tax)).toThrow(
+      "Invalid rate sheet: funds[0].sevenDayYield must be a finite number from -10 through 100",
+    );
+  });
+
+  test("requires verified HTTPS minimum sources", () => {
+    const data = appData();
+    data.minimum.funds.FNSXX.status = "pending";
+
+    expect(() => parseAppData(data.rate, data.minimum, data.tax)).toThrow(
+      "Invalid minimum data: funds.FNSXX.status must be verified",
+    );
+  });
+
+  test("requires a current or prior tax allocation year", () => {
+    const data = appData();
+    data.tax.taxYear = 2024;
+
+    expect(() => parseAppData(data.rate, data.minimum, data.tax)).toThrow(
+      "Invalid tax data: taxYear must be the current or prior allocation year",
+    );
+  });
+
+  test("rejects unsafe source URLs", () => {
+    const data = appData();
+    data.minimum.funds.FNSXX.sourceUrl = "javascript:alert(1)";
+
+    expect(() => parseAppData(data.rate, data.minimum, data.tax)).toThrow(
+      "Invalid minimum data: funds.FNSXX.sourceUrl must be a valid HTTPS URL",
     );
   });
 });
