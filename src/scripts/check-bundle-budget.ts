@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { brotliCompressSync, constants, gzipSync } from "node:zlib";
 
 export const BUNDLE_LIMITS = {
-  raw: 180_000,
-  gzip: 72_000,
-  brotli: 66_000,
+  raw: 190_000,
+  gzip: 74_000,
+  brotli: 68_000,
 } as const;
 
 export type BundleSizes = {

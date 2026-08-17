@@ -105,7 +105,7 @@ Check a completed build without rebuilding it:
 bun run check:bundle
 ```
 
-The guard reports actual and maximum total sizes for raw, gzip, and Brotli, summing each emitted file in `dist/`. It fails if raw output exceeds 180,000 bytes, gzip exceeds 72,000 bytes, or Brotli exceeds 66,000 bytes.
+The guard reports actual and maximum total sizes for raw, gzip, and Brotli, summing each emitted file in `dist/`. It fails if raw output exceeds 190,000 bytes, gzip exceeds 74,000 bytes, or Brotli exceeds 68,000 bytes.
 
 ## Available package scripts
 
