@@ -650,3 +650,70 @@ Do not reintroduce CI version pinning; the user explicitly excluded it.
 - 2026-08-17: Integrated TASK-008B intentionally increased output to 182,274 raw / 70,752 gzip / 65,228 Brotli, exceeding only the provisional 180,000 raw limit. Reopened the original slice for a reviewed final-baseline calibration with comparable growth headroom.
 - 2026-08-17: Three fresh Luna launches crashed in Bun before accepting prompts, so Sol applied the allowed tiny integration calibration in the existing isolated worktree. Commit de62a43 and PR #13 set 190,000/74,000/68,000 limits; current refreshed-data output is 179,747/69,801/64,340 and all local checks pass.
 - 2026-08-17: Terra independently reproduced 5.69-6.02% metric headroom and failure tests; PR #13 merged as e797cfd after approval and CI success.
+
+## TASK-009: Make scheduled Fidelity refreshes wait for publishable data
+**Status:** IN_PROGRESS
+**Priority:** P1
+**Owner:** Codex implementation (user-approved runtime override)
+**Reviewer:** Independent Codex reviewer (user-approved runtime override)
+**Depends on:** none
+**Blocks:** none
+**Worktree:** C:\fidelity-mm\.worktrees\task009
+**Branch:** agent/TASK-009-refresh-readiness
+**PR:** TBD
+
+### Objective
+Restore dependable daily publication of validated rates while retaining the last good dataset whenever Fidelity supplies an incomplete response.
+
+### Context
+Investigation of https://github.com/RajeevAtla/fidelity-mm/issues/14 on 2026-10-25:
+- All 28 distinct linked runs originally failed at `Validate generated data`; rate and minimum scraping succeeded. Two now show success because they were rerun later. Original-attempt logs were checked for both.
+- Every linked failure returned `complete: false` and null `portfolioNetAssets` for all 40 funds. The validator correctly rejects both conditions.
+- Example: run 39901989534 on October 23 at approximately 04:45 UTC supplied October 22 yields but no asset values. Commit and deployment were consequently skipped.
+- Run 35183382879 failed on September 17 at approximately 04:49 UTC and passed on rerun at approximately 12:10 UTC with `complete: true` and asset values present.
+- Recent scheduled Monday runs succeed with Friday data. The evidence strongly suggests staged overnight publication; the exact reliable completion time remains unverified.
+- Remote main's rate document was checked October 19 with source date October 16. Local checkout still contains August data, so implementation must start from current remote main without overwriting local work.
+- Existing request retries handle transport failures and retryable HTTP statuses, but do not inspect HTTP-success payload readiness. The scraper writes incomplete output and reports success before validation catches it.
+
+### Scope
+Implement sequentially in one owned worktree because the scraper, validation, and workflow contracts are coupled:
+1. Preserve representative incomplete and complete response fixtures from historical logs where possible; use a mocked HTTP response for regression coverage. Distinguish normalized log output from a raw API response.
+2. Move the primary refresh to a provisional 12:17 UTC Tuesday-Saturday schedule, covering the preceding Monday-Friday market dates. Confirm `previousStrict` behavior on Saturdays and holidays before finalizing. This time is supported by one successful midday rerun, not a guaranteed Fidelity publication SLA.
+3. Add a small readiness check and bounded semantic retries in the rate scraper for `complete: false` or missing required asset values. Start with three total readiness attempts separated by 60 and 120 seconds; include transport retry duration in the 20-minute job budget. Invalid identities, malformed payloads, and inconsistent dates must remain explicit failures.
+4. Write a candidate rate file only after readiness succeeds. Preserve source metadata and never manufacture assets, force the complete flag, or substitute old values into a new snapshot. Keep full cross-document validation before commit.
+5. Improve diagnostics: identify source-not-ready versus invalid-data/network errors, print attempt/date/completeness/missing-field counts, capture validation output in failure artifacts, and print validation success only after all checks pass.
+6. Include a concise failure stage and reason in repeated-failure reports, retain run links, and report recovery once for an existing automation issue. Preserve the two-consecutive-scheduled-failures threshold. Do not post issue comments during planning.
+7. Update README schedule, retry behavior, failure diagnosis, and recovery guidance.
+
+### Non-goals
+Do not weaken completeness, freshness, symbol coverage, minimum verification, or tax validation. Do not change calculation semantics, runtime data schemas, dependencies, or tooling version policy. No tax refresh redesign or unrelated application changes.
+
+### Requirements
+- HTTP success is distinct from source readiness; retry only a classified transient condition with a bounded attempt count.
+- Never commit or deploy a rejected candidate, and never advance the published check timestamp on a failed refresh.
+- Keep the existing successful-refresh `workflow_run` deployment path because bot commits do not trigger push workflows.
+- Holiday handling may retain a recent prior market date under existing freshness rules; do not hard-code yesterday as a required source date.
+- Recovery reporting must also handle successful manual reruns and avoid closing unrelated issues.
+
+### Acceptance criteria
+- [ ] Incomplete-then-complete fixture retries and publishes the complete candidate.
+- [ ] Persistently incomplete, malformed, stale, missing-fund, and date-mismatched responses fail without replacing the last good output.
+- [ ] A failed workflow cannot commit or trigger a successful-refresh deployment.
+- [ ] Failure artifacts include validation output and readable readiness diagnostics.
+- [ ] Repeated-failure and recovery behavior has focused coverage.
+- [ ] A manual refresh and resulting Pages deployment succeed after integration.
+- [ ] Observe five scheduled opportunities, including Saturday and a weekday, with complete fresh output; document any upstream delay rather than declaring a guaranteed schedule.
+- [ ] Independent Terra review and relevant local/CI checks pass.
+
+### Interfaces / contracts
+Keep `scrape:fidelity -- --tab allClass --out <path>`, JSON schema, and `validate:data` compatible. Source `complete` remains Fidelity's reported value. Exit zero means a publishable scrape; exhaustion exits nonzero. Last good published files remain unchanged on failure. Readiness retries are separate from existing HTTP retries.
+
+### Verification
+Run focused scraper/validator and retry tests, then `bun test`, `bun run typecheck`, `bun run validate:data` against freshly accepted data, `bun run build`, `bun run check:bundle`, and `bun run test:e2e`. Use fake waits for retry tests. Check workflow failure/commit/deployment guards and manually verify fresh published source date after rollout. Do not use live Fidelity availability as a unit-test dependency.
+
+### Notes / risks
+Schedule changes alone cannot guarantee upstream readiness. Short retries cannot bridge an hours-long publication delay, hence the later primary schedule. If observation still finds persistent incompleteness, measure publication timing before adding a separate recovery schedule. Saturday/holiday behavior and failure-report plumbing require verification during implementation.
+
+### Progress log
+- 2026-10-25: Diagnosis and implementation plan prepared; application/workflow code unchanged. Existing focused scraper/validator suite: 8 passed, 0 failed. Implementation has not started.
+- 2026-10-25: User authorized Codex implementation and independent Codex review in place of unavailable Herdr/Luna/Terra. Created isolated worktree from origin/main at 073b1c4. Historical Saturday run 34700853858 succeeded at 14:59 UTC with Friday source date; run 35426906620 was incomplete at 06:33 UTC. The proposed midday schedule remains provisional.
