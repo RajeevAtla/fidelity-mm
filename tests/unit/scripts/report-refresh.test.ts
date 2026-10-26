@@ -109,6 +109,17 @@ describe("refresh failure and recovery reporting", () => {
     expect(h.api.create).not.toHaveBeenCalled();
     expect(h.api.createComment).not.toHaveBeenCalled();
   });
+
+  test("retries failed issue closure without duplicating the recovery notice", async () => {
+    const h = harness("success");
+    h.issues.push(incident());
+    h.api.update.mockImplementationOnce(async () => { throw new Error("API unavailable"); });
+    await expect(h.run()).rejects.toThrow("API unavailable");
+    await h.run();
+    expect(h.api.createComment).toHaveBeenCalledTimes(1);
+    expect(h.api.update).toHaveBeenCalledTimes(2);
+    expect(h.issues).toHaveLength(0);
+  });
 });
 
 describe("failure summary", () => {

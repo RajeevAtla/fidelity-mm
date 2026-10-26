@@ -120,4 +120,14 @@ describe("all-class publication readiness", () => {
     expect(h.sleeps).toEqual([]);
     expect(h.writes).toBe(1);
   });
+
+  test.each(["direct", "shortTerm"])("preserves permissive normalization for the %s CLI tab", async tab => {
+    let output = "";
+    await main(["--tab", tab, "--out", "other.json"], {
+      fetch: async () => Response.json({ classSections: [{ funds: [{ fundNumber: 1, nav: "1.00" }] }] }),
+      write: async (_path, json) => { output = json; },
+    });
+    expect(JSON.parse(output).funds[0].nav).toBe(1);
+    expect(JSON.parse(output).tab).toBe(tab);
+  });
 });

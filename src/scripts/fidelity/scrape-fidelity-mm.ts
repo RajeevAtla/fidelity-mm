@@ -99,8 +99,9 @@ async function fetchReadyRateSheet(apiUrl: string, tab: TabName, dependencies: S
       },
     }, { fetch: dependencies.fetch });
     if (!response.ok) throw new Error(`Fidelity returned ${response.status} ${response.statusText}`);
-    const raw: unknown = await response.json();
-    if (!isRateSheet(raw)) throw new Error("Invalid Fidelity data: malformed rate-sheet structure");
+    const payload: unknown = await response.json();
+    if (tab === "allClass" && !isRateSheet(payload)) throw new Error("Invalid Fidelity data: malformed rate-sheet structure");
+    const raw = payload as FidelityRateSheet;
     const funds = normalizeRateSheet(raw);
     const now = (dependencies.now ?? Date.now)();
     const output: RateSheetData = {

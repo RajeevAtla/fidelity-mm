@@ -19,6 +19,8 @@ on:
 jobs:
   report:
     runs-on: ubuntu-latest
+    # Reporting outages must not suppress deployment of a successful refresh.
+    continue-on-error: true
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@main

@@ -28,7 +28,11 @@ async function reportRefresh({ github, context, core, workflowFile, workflowName
     const comments = await github.paginate(github.rest.issues.listComments, {
       owner, repo, issue_number: existing.number, per_page: 100,
     });
-    if (existing.body?.includes(marker) || comments.some(comment => comment.body?.includes(marker))) return;
+    if (existing.body?.includes(marker) || comments.some(comment => comment.body?.includes(marker))) {
+      // Retry closure if a previous attempt posted recovery but the update failed.
+      if (result === "success") await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: "closed", state_reason: "completed" });
+      return;
+    }
   }
   if (result === "success") {
     if (!existing) return;
