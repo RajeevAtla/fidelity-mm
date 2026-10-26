@@ -2,8 +2,9 @@ name: Refresh Fidelity Data
 
 on:
   schedule:
-    # Avoid the top-of-hour scheduling congestion documented by GitHub.
-    - cron: "17 0 * * 1-5"
+    # Allow overnight publication to finish; Tue-Sat covers Mon-Fri source dates.
+    # Provisional timing: verify against scheduled observations after rollout.
+    - cron: "17 12 * * 2-6"
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,8 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      failure_summary: ${{ steps.failure.outputs.summary }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -33,17 +36,29 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Refresh rates and minimums
+      - name: Refresh rates
+        id: rates
         shell: bash
         run: |
           set -o pipefail
           bun run scrape:fidelity -- --tab allClass --out data/fidelity-mm-allclass.json 2>&1 | tee "$RUNNER_TEMP/rates.log"
+
+      - name: Refresh minimums
+        id: minimums
+        shell: bash
+        run: |
+          set -o pipefail
           bun run scrape:fidelity-minimums -- --out data/fidelity-mm-minimums.json 2>&1 | tee "$RUNNER_TEMP/minimums.log"
 
       - name: Validate generated data
-        run: bun run validate:data
+        id: validation
+        shell: bash
+        run: |
+          set -o pipefail
+          bun run validate:data 2>&1 | tee "$RUNNER_TEMP/validation.log"
 
       - name: Commit updates
+        id: commit
         run: |
           git add data/fidelity-mm-allclass.json data/fidelity-mm-minimums.json
           if git diff --cached --quiet; then
@@ -57,6 +72,23 @@ jobs:
           git commit -m "✨ Refresh Fidelity data ($DATETIME_UTC)"
           git pull --rebase origin main
           git push
+
+      - name: Summarize failure
+        id: failure
+        if: failure()
+        uses: actions/github-script@main
+        env:
+          STEP_RESULTS: ${{ toJSON(steps) }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const logs = {};
+            for (const id of ['rates', 'minimums', 'validation']) {
+              try { logs[id] = fs.readFileSync(path.join(process.env.RUNNER_TEMP, `${id}.log`), 'utf8'); } catch {}
+            }
+            const { summarizeFailure } = require('./src/scripts/report-refresh.cjs');
+            core.setOutput('summary', summarizeFailure(JSON.parse(process.env.STEP_RESULTS), logs));
 
       - name: Upload failure diagnostics
         if: failure()
@@ -72,8 +104,10 @@ jobs:
 
   report-repeated-failure:
     needs: refresh
-    if: always() && github.event_name == 'schedule' && needs.refresh.result == 'failure'
+    if: always() && (needs.refresh.result == 'success' || (github.event_name == 'schedule' && needs.refresh.result == 'failure'))
     uses: ./.github/workflows/repeated-failure.yml
     with:
       workflow_file: data.yml
       workflow_name: Refresh Fidelity Data
+      result: ${{ needs.refresh.result }}
+      failure_summary: ${{ needs.refresh.outputs.failure_summary }}
