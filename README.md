@@ -174,12 +174,18 @@ Review the resulting diff before committing changes. Each fund retains its sourc
 
 The `.github/workflows/data.yml` workflow refreshes rates and minimums:
 
-- On weekdays at 00:17 UTC.
+- Tuesday through Saturday at 12:17 UTC, targeting the preceding Monday-Friday market dates after overnight publication.
 - When started manually from the Actions tab.
 
 The separate `.github/workflows/tax-data.yml` workflow checks Fidelity's annual tax letter monthly, on the third day at 01:43 UTC, and can also be started manually. Keeping it separate means a missing or delayed annual PDF cannot block weekday rate updates. Both workflows validate the complete checked-in dataset before committing their own files.
 
-Failed refreshes retain logs and generated files as workflow artifacts for 14 days. When two scheduled runs of the same refresh workflow fail consecutively, automation opens an issue or adds the latest run links to the existing issue.
+The schedule is provisional: Fidelity does not guarantee a publication time. An HTTP-success response may still have `complete: false` or missing portfolio asset values. For the `allClass` tab, the scraper makes up to three readiness attempts, waiting 60 and then 120 seconds between attempts. These waits are separate from the existing network/HTTP retries and fit within the 20-minute workflow timeout. Holidays may use a recent prior market date under the existing five-day freshness rule; the scraper does not require yesterday's date.
+
+The scraper validates a candidate rate sheet before replacing its output file. Persistent incompleteness exits with `Fidelity source not ready`; malformed data, stale or inconsistent dates, missing funds, and invalid required values fail immediately. Rejected candidates never advance the published timestamp or overwrite the last good dataset. Full rates/minimums/tax validation still runs before committing, and failed refreshes do not deploy.
+
+Failed refreshes retain stage logs, validation output, and available data files as workflow artifacts for 14 days. Readiness logs include the source date, completeness flag, attempt count, and missing asset count. When two scheduled runs of the same refresh workflow fail consecutively, automation opens an issue or adds the failure stage, reason, and run links to the matching bot-created issue. A successful scheduled refresh or manual run on the default branch reports recovery once and closes that automation issue. Other branches and human-created issues are excluded.
+
+After rollout, observe at least five scheduled opportunities, including Saturday and a weekday. If source-not-ready failures persist, measure when the source becomes complete before changing the schedule or adding a recovery run; keep strict validation enabled.
 
 To perform a manual refresh:
 
