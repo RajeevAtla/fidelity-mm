@@ -652,14 +652,14 @@ Do not reintroduce CI version pinning; the user explicitly excluded it.
 - 2026-08-17: Terra independently reproduced 5.69-6.02% metric headroom and failure tests; PR #13 merged as e797cfd after approval and CI success.
 
 ## TASK-009: Make scheduled Fidelity refreshes wait for publishable data
-**Status:** APPROVED
+**Status:** MERGED
 **Priority:** P1
 **Owner:** Codex implementation (user-approved runtime override)
 **Reviewer:** Independent Codex reviewer (user-approved runtime override)
 **Depends on:** none
 **Blocks:** none
-**Worktree:** C:\fidelity-mm\.worktrees\task009
-**Branch:** agent/TASK-009-refresh-readiness
+**Worktree:** removed (was C:\fidelity-mm\.worktrees\task009)
+**Branch:** deleted after merge (was agent/TASK-009-refresh-readiness)
 **PR:** https://github.com/RajeevAtla/fidelity-mm/pull/15
 
 ### Objective
@@ -701,8 +701,8 @@ Do not weaken completeness, freshness, symbol coverage, minimum verification, or
 - [x] A failed workflow cannot commit or trigger a successful-refresh deployment.
 - [x] Failure artifacts include validation output and readable readiness diagnostics.
 - [x] Repeated-failure and recovery behavior has focused coverage.
-- [ ] A manual refresh and resulting Pages deployment succeed after integration.
-- [ ] Observe five scheduled opportunities, including Saturday and a weekday, with complete fresh output; document any upstream delay rather than declaring a guaranteed schedule.
+- [x] A manual refresh and resulting Pages deployment succeed after integration.
+- [ ] Observe five scheduled opportunities, including Saturday and a weekday, with complete fresh output; document any upstream delay rather than declaring a guaranteed schedule. Tracked as post-rollout TASK-010.
 - [x] Independent Codex review (user-approved runtime override) and relevant local/CI checks pass.
 
 ### Interfaces / contracts
@@ -721,3 +721,31 @@ Schedule changes alone cannot guarantee upstream readiness. Short retries cannot
 - 2026-10-26 UTC: Independent review identified reporting outages suppressing deployment, stricter normalization affecting other CLI tabs, and recovery-comment/closure partial failure. All three were fixed with regressions. Reporting is best effort; raw schema gating applies only to allClass; failed closure is retried without duplicate comments.
 - 2026-10-26 UTC: Live Fidelity fetch accepted complete October 23 data on attempt one (40 funds, no missing assets). Regenerated rates and reverified 40 minimums. validate:data, 132 unit tests, typecheck, build, and bundle budget passed (182,471 raw / 70,804 gzip / 65,277 Brotli). Ten Chromium tests passed before data regeneration; current-snapshot E2E and remote CI are pending. Generated market snapshot exception to the 200-line limit is documented in its commit and PR.
 - 2026-10-26 UTC: Current-snapshot Chromium suite passed 10/10. GitHub CI run 40257177735 passed all checks on c9cb99d. Independent Codex reviewer APPROVED that snapshot with no unresolved BLOCKER/MAJOR findings and independently reproduced 132 unit tests, typecheck, data validation, schema preservation, and diff checks. All commits are pushed. Manual workflow/deployment smoke test and five scheduled observations remain rollout follow-ups.
+- 2026-10-26 UTC: PR #15 merged as fb670bf after final green CI run 40257383466. Main CI run 40257538785 and Pages deployment 40257538795 passed. Integrated main independently passed 132 unit tests, typecheck, 40/40/40 data validation, 10 Chromium tests (including production build), and bundle budget (183,572 raw / 70,811 gzip / 65,282 Brotli).
+- 2026-10-26 UTC: With explicit user authorization for temporary Git Credential Manager use by the CLI, dispatched manual refresh 40259012763. Rates, minimums, validation, commit, and recovery reporting all passed. Bot commit 7cdae6f updated check timestamps only; issue #14 closed automatically with one recovery notice. Its workflow_run Pages deployment 40259054230 passed both build and deploy. Final main data validation passed. Five scheduled observations remain TASK-010; publication timing is not claimed proven.
+- 2026-10-26 UTC: Verified Pages publishes the exact successful manual-refresh timestamp (2026-10-26T02:25:33.154Z), October 23 source date, and all 40 complete records. Removed the clean merged implementation worktree and its local/remote branch after validation; all work is preserved on main.
+
+## TASK-010: Observe the revised Fidelity refresh schedule
+**Status:** BACKLOG
+**Priority:** P2
+**Owner:** unassigned
+**Reviewer:** unassigned
+**Depends on:** TASK-009
+**Blocks:** none
+**Worktree:** not required for observation
+**Branch:** not required for observation
+**PR:** not required for observation
+
+### Objective
+Observe the next five scheduled refresh opportunities, including Saturday and a weekday, and record source readiness, source dates, run outcomes, and resulting deployments.
+
+### Context
+TASK-009 repairs the publication race and passes manual end-to-end recovery, but 12:17 UTC Tue-Sat is provisional. Historical and manual success cannot prove future scheduled reliability.
+
+### Scope / acceptance criteria
+- [ ] Record five scheduled run URLs and outcomes, with at least one Saturday and weekday.
+- [ ] Confirm complete, fresh, 40-fund snapshots and successful refresh deployments; holidays may retain a recent prior market date under existing validation.
+- [ ] If source-not-ready failures persist, measure completion timing before proposing a different schedule or a separate recovery run. Keep strict validation enabled.
+
+### Verification / notes
+Read Actions run jobs, readiness logs, and published JSON. No automatic observation agent or additional schedule has been created; this is an explicit post-rollout follow-up.
