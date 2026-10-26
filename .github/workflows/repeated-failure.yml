@@ -1,4 +1,4 @@
-name: Report repeated scheduled failure
+name: Report refresh failure or recovery
 
 on:
   workflow_call:
@@ -9,43 +9,37 @@ on:
       workflow_name:
         required: true
         type: string
+      result:
+        required: true
+        type: string
+      failure_summary:
+        default: ""
+        type: string
 
 jobs:
   report:
     runs-on: ubuntu-latest
+    # Reporting outages must not suppress deployment of a successful refresh.
+    continue-on-error: true
     timeout-minutes: 5
     steps:
-      - name: Open or update failure issue
+      - uses: actions/checkout@main
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Report failure or recovery
         uses: actions/github-script@main
+        env:
+          WORKFLOW_FILE: ${{ inputs.workflow_file }}
+          WORKFLOW_NAME: ${{ inputs.workflow_name }}
+          REFRESH_RESULT: ${{ inputs.result }}
+          FAILURE_SUMMARY: ${{ inputs.failure_summary }}
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const runs = await github.rest.actions.listWorkflowRuns({
-              owner,
-              repo,
-              workflow_id: '${{ inputs.workflow_file }}',
-              event: 'schedule',
-              branch: context.payload.repository.default_branch,
-              per_page: 10,
+            const { reportRefresh } = require('./src/scripts/report-refresh.cjs');
+            await reportRefresh({ github, context, core,
+              workflowFile: process.env.WORKFLOW_FILE,
+              workflowName: process.env.WORKFLOW_NAME,
+              result: process.env.REFRESH_RESULT,
+              summary: process.env.FAILURE_SUMMARY,
             });
-            const previous = runs.data.workflow_runs.find(
-              run => run.id !== context.runId && run.status === 'completed'
-            );
-            if (previous?.conclusion !== 'failure') {
-              core.info('The previous scheduled run did not fail; no issue is needed.');
-              return;
-            }
-
-            const title = `[automation] Repeated ${{ inputs.workflow_name }} failures`;
-            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
-            const previousUrl = previous.html_url;
-            const body = `Two consecutive scheduled runs failed:\n\n- ${previousUrl}\n- ${runUrl}`;
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
-              owner, repo, state: 'open', per_page: 100,
-            });
-            const existing = issues.find(issue => issue.title === title && !issue.pull_request);
-            if (existing) {
-              await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body });
-            } else {
-              await github.rest.issues.create({ owner, repo, title, body });
-            }

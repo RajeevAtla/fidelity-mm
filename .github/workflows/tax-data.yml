@@ -19,6 +19,8 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      failure_summary: ${{ steps.failure.outputs.summary }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -37,15 +39,21 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Refresh tax data
+        id: tax
         shell: bash
         run: |
           set -o pipefail
           bun run scrape:fidelity-tax -- --out data/fidelity-mm-tax-rules.json 2>&1 | tee "$RUNNER_TEMP/tax.log"
 
       - name: Validate generated data
-        run: bun run validate:data
+        id: validation
+        shell: bash
+        run: |
+          set -o pipefail
+          bun run validate:data 2>&1 | tee "$RUNNER_TEMP/validation.log"
 
       - name: Commit updates
+        id: commit
         run: |
           git add data/fidelity-mm-tax-rules.json
           if git diff --cached --quiet; then
@@ -60,6 +68,23 @@ jobs:
           git pull --rebase origin main
           git push
 
+      - name: Summarize failure
+        id: failure
+        if: failure()
+        uses: actions/github-script@main
+        env:
+          STEP_RESULTS: ${{ toJSON(steps) }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const logs = {};
+            for (const id of ['tax', 'validation']) {
+              try { logs[id] = fs.readFileSync(path.join(process.env.RUNNER_TEMP, `${id}.log`), 'utf8'); } catch {}
+            }
+            const { summarizeFailure } = require('./src/scripts/report-refresh.cjs');
+            core.setOutput('summary', summarizeFailure(JSON.parse(process.env.STEP_RESULTS), logs));
+
       - name: Upload failure diagnostics
         if: failure()
         uses: actions/upload-artifact@main
@@ -67,14 +92,17 @@ jobs:
           name: fidelity-tax-diagnostics-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/tax.log
+            ${{ runner.temp }}/validation.log
             data/fidelity-mm-tax-rules.json
           if-no-files-found: ignore
           retention-days: 14
 
   report-repeated-failure:
     needs: refresh
-    if: always() && github.event_name == 'schedule' && needs.refresh.result == 'failure'
+    if: always() && (needs.refresh.result == 'success' || (github.event_name == 'schedule' && needs.refresh.result == 'failure'))
     uses: ./.github/workflows/repeated-failure.yml
     with:
       workflow_file: tax-data.yml
       workflow_name: Refresh Fidelity Tax Data
+      result: ${{ needs.refresh.result }}
+      failure_summary: ${{ needs.refresh.outputs.failure_summary }}

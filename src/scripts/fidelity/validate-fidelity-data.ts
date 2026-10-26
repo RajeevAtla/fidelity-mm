@@ -28,19 +28,15 @@ const EXPECTED_SYMBOLS = new Set([
   "FDUXX", "FDEXX", "FZAXX", "FSRXX", "FERXX", "FSBXX", "FMAXX", "FSKXX", "FNKXX", "FZGXX",
 ]);
 
-export function validateData(rateData: RateData, minimumData: MinimumData, taxData: TaxData, now: number): string[] {
+export function validateRateData(
+  rateData: RateData,
+  now: number,
+  expectedSymbols: ReadonlySet<string> = EXPECTED_SYMBOLS,
+): string[] {
   const errors: string[] = [];
-  for (const [label, value] of [
-    ["rate sheet", rateData.checkedAt],
-    ["minimum data", minimumData.checkedAt],
-    ["tax data", taxData.checkedAt],
-  ] as const) {
-    if (!validIsoTimestamp(value)) errors.push(`${label}: missing or invalid top-level checkedAt`);
-  }
+  if (!validIsoTimestamp(rateData.checkedAt)) errors.push("rate sheet: missing or invalid top-level checkedAt");
   if (!isSafeSourceUrl(rateData.sourceUrl)) errors.push("Rate sheet: missing or invalid sourceUrl");
   if (!isSafeSourceUrl(rateData.apiUrl)) errors.push("Rate sheet: missing or invalid apiUrl");
-  if (!isSafeSourceUrl(minimumData.source)) errors.push("Minimum data: missing or invalid source");
-  if (!isSafeSourceUrl(taxData.sourceUrl)) errors.push("Tax data: missing or invalid sourceUrl");
   if (validIsoTimestamp(rateData.checkedAt)) {
     const checkedAge = ageInDays(new Date(rateData.checkedAt), now);
     if (checkedAge < -1) errors.push("Rate sheet: checkedAt is in the future");
@@ -58,25 +54,15 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
 
   const rateFunds = rateData.funds ?? [];
   const symbols = rateFunds.map((fund) => fund.symbol).filter((symbol): symbol is string => Boolean(symbol));
-  const minimumSymbols = Object.keys(minimumData.funds ?? {});
-  const taxSymbols = Object.keys(taxData.funds ?? {});
   if (rateData.count !== rateFunds.length) errors.push("Rate-sheet count does not match its fund records");
-  if (minimumData.count !== minimumSymbols.length) errors.push("Minimum count does not match its fund records");
-  if (taxData.count !== taxSymbols.length) errors.push("Tax count does not match its fund records");
+  if (rateFunds.length === 0) errors.push("Rate sheet: no fund records");
   const duplicateSymbols = symbols.filter((symbol, index) => symbols.indexOf(symbol) !== index);
   if (duplicateSymbols.length) errors.push("Duplicate rate-sheet symbols: " + [...new Set(duplicateSymbols)].join(", "));
-  checkSymbolSet(errors, "rate sheet", symbols);
-  checkSymbolSet(errors, "minimum data", minimumSymbols);
-  checkSymbolSet(errors, "tax data", taxSymbols);
+  checkSymbolSet(errors, "rate sheet", symbols, expectedSymbols);
 
-  const requiredSymbols = [...EXPECTED_SYMBOLS];
-  for (const symbol of requiredSymbols) {
+  for (const symbol of expectedSymbols) {
     const rate = rateFunds.find((fund) => fund.symbol === symbol);
-    const minimum = minimumData.funds?.[symbol];
-    const tax = taxData.funds?.[symbol];
     if (!rate) errors.push(symbol + ": missing rate record");
-    if (!minimum) errors.push(symbol + ": missing minimum rule");
-    if (!tax) errors.push(symbol + ": missing tax rule");
     if (rate) {
       if (!nonEmpty(rate.fundNo)) errors.push(symbol + ": missing fundNo");
       if (!nonEmpty(rate.symbol) || !nonEmpty(rate.name)) errors.push(symbol + ": missing symbol or name");
@@ -92,6 +78,32 @@ export function validateData(rateData: RateData, minimumData: MinimumData, taxDa
         errors.push(symbol + ": missing or out-of-range expense ratio");
       }
     }
+  }
+  return errors;
+}
+
+export function validateData(rateData: RateData, minimumData: MinimumData, taxData: TaxData, now: number): string[] {
+  const errors = validateRateData(rateData, now);
+  for (const [label, value] of [
+    ["minimum data", minimumData.checkedAt],
+    ["tax data", taxData.checkedAt],
+  ] as const) {
+    if (!validIsoTimestamp(value)) errors.push(`${label}: missing or invalid top-level checkedAt`);
+  }
+  if (!isSafeSourceUrl(minimumData.source)) errors.push("Minimum data: missing or invalid source");
+  if (!isSafeSourceUrl(taxData.sourceUrl)) errors.push("Tax data: missing or invalid sourceUrl");
+  const minimumSymbols = Object.keys(minimumData.funds ?? {});
+  const taxSymbols = Object.keys(taxData.funds ?? {});
+  if (minimumData.count !== minimumSymbols.length) errors.push("Minimum count does not match its fund records");
+  if (taxData.count !== taxSymbols.length) errors.push("Tax count does not match its fund records");
+  checkSymbolSet(errors, "minimum data", minimumSymbols);
+  checkSymbolSet(errors, "tax data", taxSymbols);
+  for (const symbol of EXPECTED_SYMBOLS) {
+    const rate = rateData.funds?.find((fund) => fund.symbol === symbol);
+    const minimum = minimumData.funds?.[symbol];
+    const tax = taxData.funds?.[symbol];
+    if (!minimum) errors.push(symbol + ": missing minimum rule");
+    if (!tax) errors.push(symbol + ": missing tax rule");
     if (minimum) {
       if (!inRange(minimum.minimumInvestment, 0, 1e9)) errors.push(symbol + ": invalid minimum investment");
       if (!minimum.minimumLabel) errors.push(symbol + ": missing minimum label");
@@ -130,8 +142,8 @@ export async function main(): Promise<void> {
   const minimumData = await readJson<MinimumData>(DATA_PATHS.minimums);
   const taxData = await readJson<TaxData>(DATA_PATHS.taxRules);
   const errors = validateData(rateData, minimumData, taxData, Date.now());
-  console.log("Validated " + EXPECTED_SYMBOLS.size + " funds, " + (minimumData.funds ? Object.keys(minimumData.funds).length : 0) + " minimum rules, and " + (taxData.funds ? Object.keys(taxData.funds).length : 0) + " tax rules.");
   if (errors.length) throw new Error("Data validation failed:\n" + errors.join("\n"));
+  console.log("Validated " + EXPECTED_SYMBOLS.size + " funds, " + (minimumData.funds ? Object.keys(minimumData.funds).length : 0) + " minimum rules, and " + (taxData.funds ? Object.keys(taxData.funds).length : 0) + " tax rules.");
 }
 
 function finite(value: unknown): value is number {
@@ -146,10 +158,10 @@ function nonEmpty(value: unknown): value is string {
 function checkRange(errors: string[], symbol: string, label: string, value: unknown, min: number, max: number): void {
   if (!inRange(value, min, max)) errors.push(`${symbol}: missing or out-of-range ${label}`);
 }
-function checkSymbolSet(errors: string[], label: string, actualSymbols: string[]): void {
+function checkSymbolSet(errors: string[], label: string, actualSymbols: string[], expectedSymbols: ReadonlySet<string> = EXPECTED_SYMBOLS): void {
   const actual = new Set(actualSymbols);
-  const missing = [...EXPECTED_SYMBOLS].filter((symbol) => !actual.has(symbol));
-  const unexpected = [...actual].filter((symbol) => !EXPECTED_SYMBOLS.has(symbol));
+  const missing = [...expectedSymbols].filter((symbol) => !actual.has(symbol));
+  const unexpected = [...actual].filter((symbol) => !expectedSymbols.has(symbol));
   if (missing.length) errors.push(`${label}: missing expected symbols: ${missing.join(", ")}`);
   if (unexpected.length) errors.push(`${label}: unexpected symbols: ${unexpected.join(", ")}`);
 }

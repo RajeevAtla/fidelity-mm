@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import rateDataJson from "../../../../data/fidelity-mm-allclass.json";
 import minimumDataJson from "../../../../data/fidelity-mm-minimums.json";
 import taxDataJson from "../../../../data/fidelity-mm-tax-rules.json";
-import { validateData, type MinimumData, type RateData, type TaxData } from "../../../../src/scripts/fidelity/validate-fidelity-data";
+import { validateData, validateRateData, type MinimumData, type RateData, type TaxData } from "../../../../src/scripts/fidelity/validate-fidelity-data";
 
 const now = Date.parse(rateDataJson.checkedAt);
 const staleNow = now + 6 * 86_400_000;
@@ -16,6 +16,24 @@ function data() {
 }
 
 describe("Fidelity data validation", () => {
+  test("rejects the incomplete publication pattern from issue 14 before cross-document validation", () => {
+    const { rate, minimum, tax } = data();
+    rate.complete = false;
+    for (const fund of rate.funds!) fund.portfolioNetAssets = null;
+    const errors = validateRateData(rate, now);
+    expect(errors).toHaveLength(41);
+    expect(errors).toContain("Rate sheet is not marked complete");
+    expect(validateData(rate, minimum, tax, now)).toEqual(errors);
+  });
+
+  test("rate validation retains date and yield checks", () => {
+    const { rate } = data();
+    rate.funds![0]!.date = "01/01/2026";
+    rate.funds![0]!.sevenDayYield = null;
+    expect(validateRateData(rate, now)).toContain("FNSXX: date differs from requestedPriceDate");
+    expect(validateRateData(rate, now)).toContain("FNSXX: missing or out-of-range seven-day yield");
+  });
+
   test("accepts the checked-in data at its check date", () => {
     const { rate, minimum, tax } = data();
     expect(validateData(rate, minimum, tax, now)).toEqual([]);
