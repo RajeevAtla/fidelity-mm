@@ -652,7 +652,7 @@ Do not reintroduce CI version pinning; the user explicitly excluded it.
 - 2026-08-17: Terra independently reproduced 5.69-6.02% metric headroom and failure tests; PR #13 merged as e797cfd after approval and CI success.
 
 ## TASK-009: Make scheduled Fidelity refreshes wait for publishable data
-**Status:** IN_REVIEW
+**Status:** APPROVED
 **Priority:** P1
 **Owner:** Codex implementation (user-approved runtime override)
 **Reviewer:** Independent Codex reviewer (user-approved runtime override)
@@ -703,7 +703,7 @@ Do not weaken completeness, freshness, symbol coverage, minimum verification, or
 - [x] Repeated-failure and recovery behavior has focused coverage.
 - [ ] A manual refresh and resulting Pages deployment succeed after integration.
 - [ ] Observe five scheduled opportunities, including Saturday and a weekday, with complete fresh output; document any upstream delay rather than declaring a guaranteed schedule.
-- [ ] Independent Terra review and relevant local/CI checks pass.
+- [x] Independent Codex review (user-approved runtime override) and relevant local/CI checks pass.
 
 ### Interfaces / contracts
 Keep `scrape:fidelity -- --tab allClass --out <path>`, JSON schema, and `validate:data` compatible. Source `complete` remains Fidelity's reported value. Exit zero means a publishable scrape; exhaustion exits nonzero. Last good published files remain unchanged on failure. Readiness retries are separate from existing HTTP retries.
@@ -720,3 +720,4 @@ Schedule changes alone cannot guarantee upstream readiness. Short retries cannot
 - 2026-10-26 UTC: Implemented shared strict pre-write rate validation, three readiness attempts with 60/120-second waits, the later Tue-Sat schedule, stage diagnostics, and tested failure/recovery reporting. PR #15 contains immediately pushed recovery checkpoints; no dependency or runtime schema changes.
 - 2026-10-26 UTC: Independent review identified reporting outages suppressing deployment, stricter normalization affecting other CLI tabs, and recovery-comment/closure partial failure. All three were fixed with regressions. Reporting is best effort; raw schema gating applies only to allClass; failed closure is retried without duplicate comments.
 - 2026-10-26 UTC: Live Fidelity fetch accepted complete October 23 data on attempt one (40 funds, no missing assets). Regenerated rates and reverified 40 minimums. validate:data, 132 unit tests, typecheck, build, and bundle budget passed (182,471 raw / 70,804 gzip / 65,277 Brotli). Ten Chromium tests passed before data regeneration; current-snapshot E2E and remote CI are pending. Generated market snapshot exception to the 200-line limit is documented in its commit and PR.
+- 2026-10-26 UTC: Current-snapshot Chromium suite passed 10/10. GitHub CI run 40257177735 passed all checks on c9cb99d. Independent Codex reviewer APPROVED that snapshot with no unresolved BLOCKER/MAJOR findings and independently reproduced 132 unit tests, typecheck, data validation, schema preservation, and diff checks. All commits are pushed. Manual workflow/deployment smoke test and five scheduled observations remain rollout follow-ups.
